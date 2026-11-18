@@ -477,15 +477,12 @@ task.spawn(function()
 end)
 
 -- Leaderboard refreshes every few seconds, from live income data.
+-- It only feeds the MENU > TOP 5 tab now (declutter 19 Nov: the
+-- world board is gone, so there is no World.SetLeaderboard call).
 task.spawn(function()
 	while true do
 		task.wait(Config.LeaderboardInterval)
 		leaderboardCache = computeLeaderboard()
-		local lines = {}
-		for i, row in ipairs(leaderboardCache) do
-			lines[i] = tostring(i) .. ". " .. row.Name .. "  " .. Format.Money(row.Income) .. "/s"
-		end
-		World.SetLeaderboard(lines)
 		syncAll()
 	end
 end)

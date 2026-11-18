@@ -82,13 +82,32 @@ the label names it and shows the multiplied $/s.
   aside. COLLECT now toasts even when the pile is $0, so the click
   visibly does something.
 
+## What the declutter pass changed (19 Nov 2026, Wira: "sangat padat dan berantakan")
+
+- **Main screen keeps only the essentials:** money (cash / $/s / pile),
+  one timer line (next event + Legendary + Epic in one row), one
+  small mission line, a compact collapsible base panel (filled slots
+  + one empty slot only), and three buttons bottom-right: MENU, LOCK
+  BASE, COLLECT. The middle of the screen is empty - the game itself
+  is visible.
+- **One MENU panel, seven tabs:** GEAR, BUFF, INDEX, MISI, FUSE,
+  REBIRTH, TOP 5. The Top-5 left the main screen entirely (it now
+  lives in MENU > TOP 5) and the Top-5 world board is gone.
+- **World labels removed:** the Top-5 board, the "FUSE MACHINE" sign
+  label and the "COLLECT $0" pad labels are gone (they duplicated the
+  HUD). What stays in the world: the neon market sign, the base owner
+  boards (name only), the Coins Shop sign, the conveyor models' price
+  labels, and the chevrons.
+- **Smaller conveyor cards:** name + gold price, $/s in small print,
+  rarity as the border colour only.
+
 ## Layout
 
 - `main.ts` (Node 22, standard library only) hands the game in: it copies `game.rbxl`, `src/`, `screenshots/` and `PLAY.json` to `/output` and writes `/output/dossier.json` with `vendor/makefun-roblox.ts`, the kit's copy, unchanged.
 - `game.rbxl` is the place Rojo builds from `src/` and `default.project.json`.
 - `src/shared/` holds the catalogue (`BrainrotData`, with each character's prop parts, missions and the fuse ladder), tuning (`Config`) and money formatting (`Format`).
 - `src/server/` holds the server systems: economy (money, missions, fuse, collect pile), conveyor and pity timer, character models, the world builder (kiosks, Fuse Machine, leaderboard board), bases, stealing and the thief NPC, events, gear and saving. The server owns all state.
-- `src/client/` holds the HUD (money, leaderboard, missions/fuse buttons), shop (conveyor cards, gear, rebirth, Index, missions, fuse) and effects (sounds). The client only renders.
+- `src/client/` holds the HUD (money, one timer line, one mission line, collapsible base panel, MENU/LOCK/COLLECT buttons), shop (small conveyor cards + the single MENU panel with its seven tabs) and effects (sounds). The client only renders.
 - `screenshots/` holds 3–4 captures of the game running in Roblox Studio; the first by name is the game's thumbnail on Roblox.
 - `PLAY.json` names the published public place on Roblox.
 

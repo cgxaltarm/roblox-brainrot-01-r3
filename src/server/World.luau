@@ -10,7 +10,6 @@ local Config = require(ReplicatedStorage.Shared.Config)
 local World = {}
 World.Bases = {}
 World.EventLabel = nil
-World.LeaderboardGui = nil
 
 local function part(parent, name, size, pos, color, material)
 	local p = Instance.new("Part")
@@ -85,7 +84,10 @@ function World.BuildBase(index, def)
 	local padX = x - doorSide * 14
 	local collect = part(folder, "CollectPad", { 10, 0.6, 8 }, { padX, 1.3, z }, { 0.15, 0.85, 0.25 }, Enum.Material.Neon)
 	collect.Name = "CollectPad"
-	boardLabel(collect, "CollectLabel", "COLLECT  $0", { 130, 30 }, { 0.1, 1, 0.3 })
+	-- No floating "COLLECT $0" label here (declutter 19 Nov: it
+	-- duplicated the HUD money panel and the two pads' labels piled
+	-- onto each other). The pad glows green and the money panel
+	-- says "Pile: $X".
 	local click = Instance.new("ClickDetector")
 	click.Name = "CollectClick"
 	click.Parent = collect
@@ -203,74 +205,12 @@ function World.BuildFuseMachine()
 	part(folder, "Chute", { 3, 2, 3 }, { pos[1], 7.5, pos[3] }, { 0.06, 0.09, 0.16 }, Enum.Material.Metal)
 	part(folder, "Glow", { 7.2, 0.6, 5.2 }, { pos[1], 6.2, pos[3] }, { 1, 0.85, 0.2 }, Enum.Material.Neon)
 	local sign = part(folder, "Sign", { 7, 2.2, 0.6 }, { pos[1], 9.5, pos[3] }, { 0.06, 0.09, 0.16 }, Enum.Material.SmoothPlastic)
-	boardLabel(sign, "FuseLabel", "FUSE MACHINE - 3 JADI 1", { 200, 40 }, { 1, 0.85, 0.2 })
+	-- No floating "FUSE MACHINE" label (declutter 19 Nov: it
+	-- duplicated the MENU > FUSE tab). The purple machine + glow
+	-- marks it; clicking the sign opens the Fuse tab.
 	local click = Instance.new("ClickDetector")
 	click.Name = "FuseClick"
 	click.Parent = sign
-end
-
--- Leaderboard board by the conveyor: Top 5 players by $/s, refreshed
--- from the server every few seconds.
-function World.BuildLeaderboardBoard()
-	local pos = Config.LeaderboardPosition
-	local folder = Instance.new("Folder")
-	folder.Name = "LeaderboardBoard"
-	folder.Parent = workspace
-	local board = part(folder, "Board", { 14, 8, 1 }, { pos[1], 6, pos[3] }, { 0.06, 0.09, 0.16 }, Enum.Material.SmoothPlastic)
-	local gui = Instance.new("BillboardGui")
-	gui.Name = "LeaderboardLabel"
-	gui.Size = UDim2.new(0, 360, 0, 200)
-	gui.StudsOffset = Vector3.new(0, 0, 0)
-	gui.AlwaysOnTop = false
-	gui.Parent = board
-	local frame = Instance.new("Frame")
-	frame.Name = "Backplate"
-	frame.Size = UDim2.new(1, 0, 1, 0)
-	frame.BackgroundColor3 = Color3.new(0.06, 0.09, 0.16)
-	frame.BackgroundTransparency = 0.1
-	frame.BorderSizePixel = 2
-	frame.BorderColor3 = Color3.new(1, 0.85, 0.2)
-	frame.Parent = gui
-	local title = Instance.new("TextLabel")
-	title.Name = "Title"
-	title.Size = UDim2.new(1, 0, 0, 30)
-	title.Position = UDim2.new(0, 0, 0, 0)
-	title.BackgroundTransparency = 1
-	title.Text = "TOP 5  $/s"
-	title.TextColor3 = Color3.new(1, 0.85, 0.2)
-	title.TextScaled = true
-	title.Font = Enum.Font.GothamBold
-	title.Parent = frame
-	for i = 1, 5 do
-		local line = Instance.new("TextLabel")
-		line.Name = "Line" .. tostring(i)
-		line.Size = UDim2.new(1, -8, 0, 32)
-		line.Position = UDim2.new(0, 4, 0, 30 + (i - 1) * 34)
-		line.BackgroundTransparency = 1
-		line.Text = tostring(i) .. ". ---"
-		line.TextColor3 = Color3.new(1, 1, 1)
-		line.TextScaled = true
-		line.Font = Enum.Font.GothamBold
-		line.TextXAlignment = Enum.TextXAlignment.Left
-		line.Parent = frame
-	end
-	World.LeaderboardGui = gui
-end
-
-function World.SetLeaderboard(lines)
-	if World.LeaderboardGui == nil then
-		return
-	end
-	local frame = World.LeaderboardGui:FindFirstChild("Backplate")
-	if frame == nil then
-		return
-	end
-	for i = 1, 5 do
-		local line = frame:FindFirstChild("Line" .. tostring(i))
-		if line ~= nil then
-			line.Text = lines[i] or (tostring(i) .. ". ---")
-		end
-	end
 end
 
 function World.BuildPityBoard()
@@ -329,11 +269,10 @@ function World.BuildWorld()
 	World.BuildChevrons()
 	World.BuildGearStall()
 	World.BuildFuseMachine()
-	World.BuildLeaderboardBoard()
 	World.BuildPityBoard()
 end
 
--- Pity countdown lives in the HUD now (Hud.PityLabel); this stays as a
+-- Pity countdown lives in the HUD now (Hud.TimerLabel); this stays as a
 -- no-op so the init loop's call keeps working.
 function World.SetPityText(text)
 end

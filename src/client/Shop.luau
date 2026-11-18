@@ -1,10 +1,11 @@
--- Shop: the conveyor cards, the gear shop, the rebirth panel with its
--- named-character requirements and checkmarks, the collection Index,
--- the mission panel and the Fuse Machine panel. Cards are dark with
--- bold white text, a rarity-coloured border and a gold price, so they
--- read when shrunk. Cards are display-only: buying happens by holding
--- E on the brainrot model itself (ProximityPrompt), like the real
--- Steal a Brainrot.
+-- Shop: the conveyor cards and the single MENU panel. The main
+-- screen stays bare (Wira 19 Nov: "sangat padat dan berantakan"), so
+-- gear, buff, index, missions, fuse, rebirth and the Top-5 all live
+-- behind one MENU button as tabs of one panel. Cards are display-only
+-- and small: name + price, $/s in small print, rarity as the border
+-- colour. Buying happens by holding E on the brainrot model itself
+-- (ProximityPrompt) or clicking the model, like the real Steal a
+-- Brainrot.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Format = require(ReplicatedStorage.Shared.Format)
@@ -13,30 +14,29 @@ local BrainrotData = require(ReplicatedStorage.Shared.BrainrotData)
 local Shop = {}
 Shop.Remotes = nil
 Shop.ConveyorFrame = nil
-Shop.GearPanel = nil
-Shop.RebirthPanel = nil
-Shop.IndexPanel = nil
-Shop.BuffPanel = nil
-Shop.MissionPanel = nil
-Shop.FusePanel = nil
-Shop.OpenPanel = ""
+Shop.MenuPanel = nil
+Shop.MenuContent = nil
+Shop.MenuTabs = {}
+Shop.MenuOpen = false
+Shop.MenuTab = "gear"
 Shop.FuseSelected = {}
+Shop.LastConveyorSignature = nil
+Shop.LastSnapshot = nil
 
 local DARK = Color3.new(0.06, 0.09, 0.16)
+local LIME = Color3.new(0.64, 0.90, 0.21)
 local GOLD = Color3.new(1, 0.85, 0.2)
 
-local function makePanel(name, size, pos)
-	local panel = Instance.new("Frame")
-	panel.Name = name
-	panel.Size = size
-	panel.Position = pos
-	panel.BackgroundColor3 = DARK
-	panel.BorderColor3 = Color3.new(1, 1, 1)
-	panel.BorderSizePixel = 2
-	panel.Visible = false
-	panel.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui"):WaitForChild("NightMarketHud")
-	return panel
-end
+local MENU_TABS = { "gear", "buff", "index", "mission", "fuse", "rebirth", "top5" }
+local MENU_TITLES = {
+	gear = "GEAR",
+	buff = "BUFF",
+	index = "INDEX",
+	mission = "MISI",
+	fuse = "FUSE",
+	rebirth = "REBIRTH",
+	top5 = "TOP 5",
+}
 
 local function makeTitle(parent, text)
 	local label = Instance.new("TextLabel")
@@ -54,95 +54,136 @@ end
 function Shop.Build(remotes)
 	Shop.Remotes = remotes
 	local gui = game.Players.LocalPlayer:WaitForChild("PlayerGui"):WaitForChild("NightMarketHud")
+	-- Small conveyor cards, bottom-centre.
 	local frame = Instance.new("Frame")
 	frame.Name = "ConveyorFrame"
-	frame.Size = UDim2.new(0, 760, 0, 120)
-	frame.Position = UDim2.new(0.5, -380, 1, -140)
+	frame.Size = UDim2.new(0, 652, 0, 84)
+	frame.Position = UDim2.new(0.5, -326, 1, -100)
 	frame.BackgroundTransparency = 1
 	-- Display-only: never swallow clicks for buttons underneath.
 	frame.Active = false
 	frame.Parent = gui
 	Shop.ConveyorFrame = frame
-	-- How to buy, right above the cards (play-test 19 Nov: the
-	-- tester held E at the models but never saw a prompt).
 	local hint = Instance.new("TextLabel")
 	hint.Name = "BuyHint"
-	hint.Size = UDim2.new(0, 760, 0, 22)
-	hint.Position = UDim2.new(0.5, -380, 1, -166)
+	hint.Size = UDim2.new(0, 652, 0, 20)
+	hint.Position = UDim2.new(0.5, -326, 1, -126)
 	hint.BackgroundTransparency = 1
 	hint.Text = "Tahan E di dekat brainrot - atau KLIK modelnya untuk membeli"
 	hint.TextColor3 = Color3.new(1, 1, 1)
 	hint.TextScaled = true
 	hint.Font = Enum.Font.GothamBold
 	hint.Parent = gui
-	Shop.GearPanel = makePanel("GearPanel", UDim2.new(0, 420, 0, 260), UDim2.new(0.5, -210, 0.5, -130))
-	Shop.RebirthPanel = makePanel("RebirthPanel", UDim2.new(0, 460, 0, 300), UDim2.new(0.5, -230, 0.5, -150))
-	Shop.IndexPanel = makePanel("IndexPanel", UDim2.new(0, 560, 0, 460), UDim2.new(0.5, -280, 0.5, -230))
-	Shop.BuffPanel = makePanel("BuffPanel", UDim2.new(0, 460, 0, 270), UDim2.new(0.5, -230, 0.5, -135))
-	Shop.MissionPanel = makePanel("MissionPanel", UDim2.new(0, 480, 0, 340), UDim2.new(0.5, -240, 0.5, -170))
-	Shop.FusePanel = makePanel("FusePanel", UDim2.new(0, 480, 0, 460), UDim2.new(0.5, -240, 0.5, -230))
-end
-
-function Shop.Toggle(panelName)
-	if Shop.OpenPanel == panelName then
-		Shop.OpenPanel = ""
-	else
-		Shop.OpenPanel = panelName
+	-- One menu panel with seven tabs.
+	local panel = Instance.new("Frame")
+	panel.Name = "MenuPanel"
+	panel.Size = UDim2.new(0, 600, 0, 480)
+	panel.Position = UDim2.new(0.5, -300, 0.5, -240)
+	panel.BackgroundColor3 = DARK
+	panel.BorderColor3 = Color3.new(1, 1, 1)
+	panel.BorderSizePixel = 2
+	panel.Visible = false
+	panel.Parent = gui
+	Shop.MenuPanel = panel
+	for i, tab in ipairs(MENU_TABS) do
+		local button = Instance.new("TextButton")
+		button.Name = "Tab_" .. tab
+		button.Size = UDim2.new(0, 80, 0, 34)
+		button.Position = UDim2.new(0, 8 + (i - 1) * 84, 0, 6)
+		button.BackgroundColor3 = DARK
+		button.BorderColor3 = GOLD
+		button.BorderSizePixel = 2
+		button.Text = MENU_TITLES[tab]
+		button.TextColor3 = Color3.new(1, 1, 1)
+		button.TextScaled = true
+		button.Font = Enum.Font.GothamBold
+		button.Parent = panel
+		Shop.MenuTabs[tab] = button
+		local tabName = tab
+		button.MouseButton1Click:Connect(function()
+			Shop.MenuTab = tabName
+			Shop.RenderMenuTab(Shop.LastSnapshot or { Placed = {}, Slots = 8, Upgrades = {}, Missions = {}, Rebirth = 0, RebirthNeed = {}, RebirthCost = 0, CanRebirth = false, Cash = 0, Leaderboard = {}, Owned = {} })
+		end)
 	end
-	Shop.GearPanel.Visible = Shop.OpenPanel == "gear"
-	Shop.RebirthPanel.Visible = Shop.OpenPanel == "rebirth"
-	Shop.IndexPanel.Visible = Shop.OpenPanel == "index"
-	Shop.BuffPanel.Visible = Shop.OpenPanel == "buff"
-	Shop.MissionPanel.Visible = Shop.OpenPanel == "mission"
-	Shop.FusePanel.Visible = Shop.OpenPanel == "fuse"
+	local content = Instance.new("Frame")
+	content.Name = "MenuContent"
+	content.Size = UDim2.new(1, -16, 1, -56)
+	content.Position = UDim2.new(0, 8, 0, 48)
+	content.BackgroundTransparency = 1
+	content.Parent = panel
+	Shop.MenuContent = content
 end
 
-function Shop.ToggleGear()
-	Shop.Toggle("gear")
+function Shop.ToggleMenu()
+	Shop.MenuOpen = not Shop.MenuOpen
+	Shop.MenuPanel.Visible = Shop.MenuOpen
+	if Shop.MenuOpen and Shop.LastSnapshot ~= nil then
+		Shop.RenderMenuTab(Shop.LastSnapshot)
+	end
 end
 
-function Shop.ToggleRebirth()
-	Shop.Toggle("rebirth")
+function Shop.OpenMenuTab(tab)
+	Shop.MenuTab = tab
+	Shop.MenuOpen = true
+	Shop.MenuPanel.Visible = true
+	if Shop.LastSnapshot ~= nil then
+		Shop.RenderMenuTab(Shop.LastSnapshot)
+	end
 end
 
-function Shop.ToggleIndex()
-	Shop.Toggle("index")
-end
-
-function Shop.ToggleBuff()
-	Shop.Toggle("buff")
-end
-
-function Shop.ToggleMission()
-	Shop.Toggle("mission")
-end
-
-function Shop.ToggleFuse()
-	Shop.Toggle("fuse")
+function Shop.CloseMenu()
+	Shop.MenuOpen = false
+	Shop.MenuPanel.Visible = false
 end
 
 function Shop.Render(snapshot)
 	Shop.LastSnapshot = snapshot
 	Shop.RenderConveyor(snapshot)
-	if Shop.OpenPanel == "gear" then
-		Shop.RenderGear(snapshot)
-	elseif Shop.OpenPanel == "rebirth" then
-		Shop.RenderRebirth(snapshot)
-	elseif Shop.OpenPanel == "index" then
-		Shop.RenderIndex(snapshot)
-	elseif Shop.OpenPanel == "buff" then
-		Shop.RenderBuff(snapshot)
-	elseif Shop.OpenPanel == "mission" then
-		Shop.RenderMission(snapshot)
-	elseif Shop.OpenPanel == "fuse" then
-		Shop.RenderFuse(snapshot)
+	if Shop.MenuOpen then
+		Shop.RenderMenuTab(snapshot)
 	end
 end
 
--- Cards only rebuild when the conveyor contents or the player's
--- cash actually change (play-test 19 Nov: the old code destroyed
--- and recreated all five cards on EVERY 1s snapshot, which read as
--- the set "rotating" constantly and could swallow clicks mid-press).
+function Shop.RenderMenuTab(snapshot)
+	if Shop.MenuContent == nil or snapshot == nil then
+		return
+	end
+	for _, tab in ipairs(MENU_TABS) do
+		local button = Shop.MenuTabs[tab]
+		if button ~= nil then
+			if tab == Shop.MenuTab then
+				button.BackgroundColor3 = LIME
+				button.TextColor3 = DARK
+			else
+				button.BackgroundColor3 = DARK
+				button.TextColor3 = Color3.new(1, 1, 1)
+			end
+		end
+	end
+	for _, child in ipairs(Shop.MenuContent:GetChildren()) do
+		child:Destroy()
+	end
+	if Shop.MenuTab == "gear" then
+		Shop.RenderGear(snapshot)
+	elseif Shop.MenuTab == "buff" then
+		Shop.RenderBuff(snapshot)
+	elseif Shop.MenuTab == "index" then
+		Shop.RenderIndex(snapshot)
+	elseif Shop.MenuTab == "mission" then
+		Shop.RenderMission(snapshot)
+	elseif Shop.MenuTab == "fuse" then
+		Shop.RenderFuse(snapshot)
+	elseif Shop.MenuTab == "rebirth" then
+		Shop.RenderRebirth(snapshot)
+	elseif Shop.MenuTab == "top5" then
+		Shop.RenderTop5(snapshot)
+	end
+end
+
+-- Cards only rebuild when the conveyor contents or affordability
+-- actually change (play-test 19 Nov: the old code destroyed and
+-- recreated all five cards on EVERY 1s snapshot, which read as the
+-- set "rotating" constantly and could swallow clicks mid-press).
 Shop.LastConveyorSignature = nil
 
 function Shop.RenderConveyor(snapshot)
@@ -151,9 +192,6 @@ function Shop.RenderConveyor(snapshot)
 	end
 	local parts = {}
 	for _, slot in ipairs(snapshot.Conveyor) do
-		-- Affordability flips the card's dim state, so it is part
-		-- of the signature (a coarse cash bucket would leave a
-		-- card dimmed after the player could afford it).
 		table.insert(parts, slot.CharId .. ":" .. tostring(slot.Mutation) .. ":" .. tostring(slot.Cost) .. ":" .. tostring(snapshot.Cash < slot.Cost))
 	end
 	local signature = table.concat(parts, "|")
@@ -170,16 +208,16 @@ function Shop.RenderConveyor(snapshot)
 			local rarityColor = BrainrotData.RarityColor(def.Rarity)
 			local card = Instance.new("Frame")
 			card.Name = "Card" .. tostring(i)
-			card.Active = false
-			card.Size = UDim2.new(0, 144, 0, 112)
-			card.Position = UDim2.new(0, (i - 1) * 152, 0, 0)
+			card.Size = UDim2.new(0, 124, 0, 84)
+			card.Position = UDim2.new(0, (i - 1) * 132, 0, 0)
 			card.BackgroundColor3 = DARK
 			card.BorderColor3 = Color3.new(rarityColor[1], rarityColor[2], rarityColor[3])
 			card.BorderSizePixel = 3
+			card.Active = false
 			card.Parent = Shop.ConveyorFrame
 			local mark = BrainrotData.MutationMark(slot.Mutation)
 			local nameLabel = Instance.new("TextLabel")
-			nameLabel.Size = UDim2.new(1, -8, 0, 30)
+			nameLabel.Size = UDim2.new(1, -8, 0, 24)
 			nameLabel.Position = UDim2.new(0, 4, 0, 4)
 			nameLabel.BackgroundTransparency = 1
 			nameLabel.Text = def.Name .. " " .. mark
@@ -187,24 +225,24 @@ function Shop.RenderConveyor(snapshot)
 			nameLabel.TextScaled = true
 			nameLabel.Font = Enum.Font.GothamBold
 			nameLabel.Parent = card
-			local rarityLabel = Instance.new("TextLabel")
-			rarityLabel.Size = UDim2.new(1, -8, 0, 26)
-			rarityLabel.Position = UDim2.new(0, 4, 0, 36)
-			rarityLabel.BackgroundTransparency = 1
-			rarityLabel.Text = def.Rarity .. "  " .. Format.Money(def.Income) .. "/s"
-			rarityLabel.TextColor3 = Color3.new(rarityColor[1], rarityColor[2], rarityColor[3])
-			rarityLabel.TextScaled = true
-			rarityLabel.Font = Enum.Font.GothamBold
-			rarityLabel.Parent = card
 			local priceLabel = Instance.new("TextLabel")
-			priceLabel.Size = UDim2.new(1, -8, 0, 30)
-			priceLabel.Position = UDim2.new(0, 4, 0, 66)
+			priceLabel.Size = UDim2.new(1, -8, 0, 26)
+			priceLabel.Position = UDim2.new(0, 4, 0, 30)
 			priceLabel.BackgroundTransparency = 1
 			priceLabel.Text = Format.Money(slot.Cost)
 			priceLabel.TextColor3 = GOLD
 			priceLabel.TextScaled = true
 			priceLabel.Font = Enum.Font.GothamBold
 			priceLabel.Parent = card
+			local rateLabel = Instance.new("TextLabel")
+			rateLabel.Size = UDim2.new(1, -8, 0, 18)
+			rateLabel.Position = UDim2.new(0, 4, 0, 58)
+			rateLabel.BackgroundTransparency = 1
+			rateLabel.Text = Format.Money(def.Income) .. "/s"
+			rateLabel.TextColor3 = Color3.new(rarityColor[1], rarityColor[2], rarityColor[3])
+			rateLabel.TextScaled = true
+			rateLabel.Font = Enum.Font.GothamBold
+			rateLabel.Parent = card
 			if snapshot.Cash < slot.Cost then
 				card.BackgroundTransparency = 0.4
 			end
@@ -213,10 +251,8 @@ function Shop.RenderConveyor(snapshot)
 end
 
 function Shop.RenderGear(snapshot)
-	for _, child in ipairs(Shop.GearPanel:GetChildren()) do
-		child:Destroy()
-	end
-	makeTitle(Shop.GearPanel, "COINS SHOP - GEAR")
+	local parent = Shop.MenuContent
+	makeTitle(parent, "COINS SHOP - GEAR")
 	for i, gear in ipairs(BrainrotData.GEAR) do
 		local button = Instance.new("TextButton")
 		button.Size = UDim2.new(1, -16, 0, 56)
@@ -228,7 +264,7 @@ function Shop.RenderGear(snapshot)
 		button.TextColor3 = Color3.new(1, 1, 1)
 		button.TextScaled = true
 		button.Font = Enum.Font.GothamBold
-		button.Parent = Shop.GearPanel
+		button.Parent = parent
 		local gearId = gear.Id
 		button.MouseButton1Click:Connect(function()
 			Shop.Remotes.BuyGear:FireServer(gearId)
@@ -237,10 +273,8 @@ function Shop.RenderGear(snapshot)
 end
 
 function Shop.RenderBuff(snapshot)
-	for _, child in ipairs(Shop.BuffPanel:GetChildren()) do
-		child:Destroy()
-	end
-	makeTitle(Shop.BuffPanel, "BUFF SHOP - UPGRADE PERMANEN")
+	local parent = Shop.MenuContent
+	makeTitle(parent, "BUFF SHOP - UPGRADE PERMANEN")
 	local upgrades = snapshot.Upgrades or { Luck = 0, Income = 0, Speed = 0 }
 	for i, def in ipairs(BrainrotData.UPGRADES) do
 		local level = upgrades[def.Id] or 0
@@ -251,7 +285,7 @@ function Shop.RenderBuff(snapshot)
 		row.BackgroundColor3 = DARK
 		row.BorderColor3 = GOLD
 		row.BorderSizePixel = 2
-		row.Parent = Shop.BuffPanel
+		row.Parent = parent
 		local nameLabel = Instance.new("TextLabel")
 		nameLabel.Size = UDim2.new(1, -140, 0, 30)
 		nameLabel.Position = UDim2.new(0, 8, 0, 4)
@@ -302,10 +336,8 @@ function Shop.RenderBuff(snapshot)
 end
 
 function Shop.RenderMission(snapshot)
-	for _, child in ipairs(Shop.MissionPanel:GetChildren()) do
-		child:Destroy()
-	end
-	makeTitle(Shop.MissionPanel, "MISI - KLAIM HADIAHNYA")
+	local parent = Shop.MenuContent
+	makeTitle(parent, "MISI - KLAIM HADIAHNYA")
 	local missions = snapshot.Missions or {}
 	for i, mission in ipairs(missions) do
 		local row = Instance.new("Frame")
@@ -314,7 +346,7 @@ function Shop.RenderMission(snapshot)
 		row.BackgroundColor3 = DARK
 		row.BorderColor3 = GOLD
 		row.BorderSizePixel = 2
-		row.Parent = Shop.MissionPanel
+		row.Parent = parent
 		local mark = "○"
 		local markColor = Color3.new(0.6, 0.6, 0.6)
 		if mission.Claimed then
@@ -368,13 +400,11 @@ function Shop.RenderMission(snapshot)
 	end
 end
 
--- Fuse panel: tap up to 3 of your own placed brainrots. When all
+-- Fuse tab: tap up to 3 of your own placed brainrots. When all
 -- three share a rarity, FUSE turns them into one of the next tier.
 function Shop.RenderFuse(snapshot)
-	for _, child in ipairs(Shop.FusePanel:GetChildren()) do
-		child:Destroy()
-	end
-	makeTitle(Shop.FusePanel, "FUSE MACHINE - 3 JADI 1")
+	local parent = Shop.MenuContent
+	makeTitle(parent, "FUSE MACHINE - 3 JADI 1")
 	local hint = Instance.new("TextLabel")
 	hint.Size = UDim2.new(1, -16, 0, 26)
 	hint.Position = UDim2.new(0, 8, 0, 36)
@@ -383,7 +413,7 @@ function Shop.RenderFuse(snapshot)
 	hint.TextColor3 = Color3.new(1, 1, 1)
 	hint.TextScaled = true
 	hint.Font = Enum.Font.GothamBold
-	hint.Parent = Shop.FusePanel
+	hint.Parent = parent
 	-- Drop selections that no longer exist (sold, stolen, fused).
 	local placedBySlot = {}
 	for _, item in ipairs(snapshot.Placed) do
@@ -408,7 +438,7 @@ function Shop.RenderFuse(snapshot)
 		button.BorderSizePixel = 2
 		button.TextScaled = true
 		button.Font = Enum.Font.GothamBold
-		button.Parent = Shop.FusePanel
+		button.Parent = parent
 		if item ~= nil then
 			local def = BrainrotData.FindCharacter(item.CharId)
 			if def ~= nil then
@@ -450,17 +480,17 @@ function Shop.RenderFuse(snapshot)
 				table.insert(nextSelected, slotIndex)
 			end
 			Shop.FuseSelected = nextSelected
-			Shop.RenderFuse(Shop.LastSnapshot or { Placed = {}, Slots = 8 })
+			Shop.RenderMenuTab(Shop.LastSnapshot or { Placed = {}, Slots = 8 })
 		end)
 	end
 	local fuseButton = Instance.new("TextButton")
 	fuseButton.Size = UDim2.new(1, -16, 0, 48)
-	fuseButton.Position = UDim2.new(0, 8, 0, 404)
+	fuseButton.Position = UDim2.new(0, 8, 0, 360)
 	fuseButton.BackgroundColor3 = Color3.new(0.64, 0.90, 0.21)
 	fuseButton.TextColor3 = Color3.new(0.06, 0.09, 0.16)
 	fuseButton.TextScaled = true
 	fuseButton.Font = Enum.Font.GothamBold
-	fuseButton.Parent = Shop.FusePanel
+	fuseButton.Parent = parent
 	local ready = false
 	local nextRarity = nil
 	if #selected == 3 then
@@ -490,11 +520,9 @@ function Shop.RenderFuse(snapshot)
 end
 
 function Shop.RenderRebirth(snapshot)
-	for _, child in ipairs(Shop.RebirthPanel:GetChildren()) do
-		child:Destroy()
-	end
+	local parent = Shop.MenuContent
 	local nextLevel = snapshot.Rebirth + 1
-	makeTitle(Shop.RebirthPanel, "REBIRTH Lv" .. tostring(nextLevel) .. " - " .. Format.Money(snapshot.RebirthCost))
+	makeTitle(parent, "REBIRTH Lv" .. tostring(nextLevel) .. " - " .. Format.Money(snapshot.RebirthCost))
 	local owned = {}
 	for _, charId in ipairs(snapshot.Owned) do
 		owned[charId] = true
@@ -520,7 +548,7 @@ function Shop.RenderRebirth(snapshot)
 		label.TextColor3 = color
 		label.TextScaled = true
 		label.Font = Enum.Font.GothamBold
-		label.Parent = Shop.RebirthPanel
+		label.Parent = parent
 	end
 	local cashLabel = Instance.new("TextLabel")
 	cashLabel.Size = UDim2.new(1, -16, 0, 34)
@@ -530,7 +558,7 @@ function Shop.RenderRebirth(snapshot)
 	cashLabel.TextColor3 = GOLD
 	cashLabel.TextScaled = true
 	cashLabel.Font = Enum.Font.GothamBold
-	cashLabel.Parent = Shop.RebirthPanel
+	cashLabel.Parent = parent
 	local rewardLabel = Instance.new("TextLabel")
 	rewardLabel.Size = UDim2.new(1, -16, 0, 34)
 	rewardLabel.Position = UDim2.new(0, 8, 0, 168)
@@ -539,7 +567,7 @@ function Shop.RenderRebirth(snapshot)
 	rewardLabel.TextColor3 = Color3.new(1, 1, 1)
 	rewardLabel.TextScaled = true
 	rewardLabel.Font = Enum.Font.GothamBold
-	rewardLabel.Parent = Shop.RebirthPanel
+	rewardLabel.Parent = parent
 	local button = Instance.new("TextButton")
 	button.Size = UDim2.new(1, -16, 0, 48)
 	button.Position = UDim2.new(0, 8, 0, 212)
@@ -548,7 +576,7 @@ function Shop.RenderRebirth(snapshot)
 	button.TextColor3 = Color3.new(0.06, 0.09, 0.16)
 	button.TextScaled = true
 	button.Font = Enum.Font.GothamBold
-	button.Parent = Shop.RebirthPanel
+	button.Parent = parent
 	if not snapshot.CanRebirth then
 		button.BackgroundTransparency = 0.5
 	end
@@ -558,9 +586,7 @@ function Shop.RenderRebirth(snapshot)
 end
 
 function Shop.RenderIndex(snapshot)
-	for _, child in ipairs(Shop.IndexPanel:GetChildren()) do
-		child:Destroy()
-	end
+	local parent = Shop.MenuContent
 	local owned = {}
 	for _, charId in ipairs(snapshot.Owned) do
 		owned[charId] = true
@@ -569,7 +595,7 @@ function Shop.RenderIndex(snapshot)
 	for _, _ in pairs(owned) do
 		count = count + 1
 	end
-	makeTitle(Shop.IndexPanel, "INDEX - " .. tostring(count) .. "/" .. tostring(#BrainrotData.CHARACTERS) .. " (" .. tostring(math.floor(count / #BrainrotData.CHARACTERS * 100)) .. "%)")
+	makeTitle(parent, "INDEX - " .. tostring(count) .. "/" .. tostring(#BrainrotData.CHARACTERS) .. " (" .. tostring(math.floor(count / #BrainrotData.CHARACTERS * 100)) .. "%)")
 	for i, def in ipairs(BrainrotData.CHARACTERS) do
 		local col = (i - 1) % 5
 		local row = math.floor((i - 1) / 5)
@@ -590,7 +616,32 @@ function Shop.RenderIndex(snapshot)
 		end
 		cell.TextScaled = true
 		cell.Font = Enum.Font.GothamBold
-		cell.Parent = Shop.IndexPanel
+		cell.Parent = parent
+	end
+end
+
+function Shop.RenderTop5(snapshot)
+	local parent = Shop.MenuContent
+	makeTitle(parent, "TOP 5 - $/s")
+	local rows = snapshot.Leaderboard or {}
+	for i = 1, 5 do
+		local row = rows[i]
+		local text = tostring(i) .. ". ---"
+		if row ~= nil then
+			text = tostring(i) .. ".  " .. row.Name .. "  -  " .. Format.Money(row.Income) .. "/s"
+		end
+		local label = Instance.new("TextLabel")
+		label.Size = UDim2.new(1, -16, 0, 40)
+		label.Position = UDim2.new(0, 8, 0, 40 + (i - 1) * 48)
+		label.BackgroundColor3 = DARK
+		label.BorderColor3 = GOLD
+		label.BorderSizePixel = 2
+		label.Text = text
+		label.TextColor3 = Color3.new(1, 1, 1)
+		label.TextScaled = true
+		label.Font = Enum.Font.GothamBold
+		label.TextXAlignment = Enum.TextXAlignment.Left
+		label.Parent = parent
 	end
 end
 

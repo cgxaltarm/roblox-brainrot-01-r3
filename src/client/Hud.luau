@@ -1,8 +1,12 @@
--- Hud: the screen interface. Money top-right, event banner and pity
--- countdown top-centre, base panel on the left, Top-5 leaderboard
--- under it, action buttons bottom-right, tutorial toasts on join.
--- Dark cards, bold white text, gold prices: readable when the
--- screenshot is shrunk.
+-- Hud: the screen interface, decluttered (Wira 19 Nov: "sangat padat
+-- dan berantakan"). Only the essentials stay on the main screen:
+-- money top-right, ONE timer line top-centre, ONE mission line under
+-- it, a compact collapsible base panel on the left, and three buttons
+-- bottom-right (MENU / LOCK / COLLECT). Everything else (gear, buff,
+-- index, missions, fuse, rebirth, Top-5) lives in the single MENU
+-- panel (Shop). The middle of the screen stays empty so the game
+-- itself is visible. A new player should get it in 3 seconds: how
+-- much money, what to do next, where to buy.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Format = require(ReplicatedStorage.Shared.Format)
@@ -12,14 +16,13 @@ local Hud = {}
 Hud.MoneyLabel = nil
 Hud.IncomeLabel = nil
 Hud.PendingLabel = nil
-Hud.BannerLabel = nil
-Hud.PityLabel = nil
+Hud.TimerLabel = nil
+Hud.MissionLabel = nil
 Hud.BasePanel = nil
-Hud.LeaderboardPanel = nil
-Hud.TutorialLabel = nil
+Hud.BaseHeader = nil
+Hud.BaseCollapsed = false
 Hud.ToastFrame = nil
 Hud.LockButton = nil
-Hud.RebirthButton = nil
 Hud.CollectButton = nil
 Hud.LastSnapshot = nil
 Hud.Remotes = nil
@@ -65,100 +68,77 @@ function Hud.Build(remotes, callbacks)
 	gui.ResetOnSpawn = false
 	gui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
-	-- Top-right money block.
+	-- Top-right money block, slim: cash, income, pile.
 	local moneyFrame = Instance.new("Frame")
 	moneyFrame.Name = "MoneyFrame"
-	moneyFrame.Size = UDim2.new(0, 260, 0, 110)
-	moneyFrame.Position = UDim2.new(1, -280, 0, 16)
+	moneyFrame.Size = UDim2.new(0, 240, 0, 96)
+	moneyFrame.Position = UDim2.new(1, -260, 0, 12)
 	moneyFrame.BackgroundColor3 = DARK
 	moneyFrame.BorderColor3 = GOLD
 	moneyFrame.BorderSizePixel = 2
 	moneyFrame.Parent = gui
-	Hud.MoneyLabel = makeLabel(moneyFrame, "Money", UDim2.new(1, -16, 0, 48), UDim2.new(0, 8, 0, 4), "$100", GOLD, 28)
-	Hud.IncomeLabel = makeLabel(moneyFrame, "Income", UDim2.new(1, -16, 0, 26), UDim2.new(0, 8, 0, 52), "+$0/s", Color3.new(0.4, 1, 0.4), 20)
-	Hud.PendingLabel = makeLabel(moneyFrame, "Pending", UDim2.new(1, -16, 0, 26), UDim2.new(0, 8, 0, 78), "Pile: $0 - walk to COLLECT", Color3.new(1, 1, 1), 20)
+	Hud.MoneyLabel = makeLabel(moneyFrame, "Money", UDim2.new(1, -16, 0, 38), UDim2.new(0, 8, 0, 4), "$100", GOLD, 28)
+	Hud.IncomeLabel = makeLabel(moneyFrame, "Income", UDim2.new(1, -16, 0, 22), UDim2.new(0, 8, 0, 44), "+$0/s", Color3.new(0.4, 1, 0.4), 20)
+	Hud.PendingLabel = makeLabel(moneyFrame, "Pending", UDim2.new(1, -16, 0, 22), UDim2.new(0, 8, 0, 68), "Pile: $0", Color3.new(1, 1, 1), 20)
 
-	-- Top-centre banner + pity countdown.
-	Hud.BannerLabel = makeLabel(gui, "Banner", UDim2.new(0, 560, 0, 44), UDim2.new(0.5, -280, 0, 12), "BRAINROT NIGHT MARKET", LIME, 24)
-	Hud.PityLabel = makeLabel(gui, "Pity", UDim2.new(0, 560, 0, 28), UDim2.new(0.5, -280, 0, 58), "Legendary guaranteed in 08:00", GOLD, 20)
+	-- ONE timer line top-centre: next event + both pity clocks.
+	Hud.TimerLabel = makeLabel(gui, "Timer", UDim2.new(0, 560, 0, 26), UDim2.new(0.5, -280, 0, 10), "", LIME, 20)
 
-	-- Tutorial toasts under the banner.
-	Hud.TutorialLabel = makeLabel(gui, "Tutorial", UDim2.new(0, 620, 0, 60), UDim2.new(0.5, -310, 0, 96), "1. Buy a brainrot on the red carpet", Color3.new(1, 1, 1), 20)
-	Hud.TutorialLabel.BackgroundColor3 = DARK
-	Hud.TutorialLabel.BackgroundTransparency = 0.1
+	-- ONE mission line under it, small, never blocking the centre.
+	Hud.MissionLabel = makeLabel(gui, "Mission", UDim2.new(0, 480, 0, 22), UDim2.new(0.5, -240, 0, 40), "1. Buy a brainrot on the red carpet", Color3.new(1, 1, 1), 20)
+	Hud.MissionLabel.BackgroundColor3 = DARK
+	Hud.MissionLabel.BackgroundTransparency = 0.1
 
 	-- Toast feed: right of the base panel, above the conveyor cards.
-	-- Play-test 19 Nov: the old bottom-left feed sat under the cards
-	-- (x 305..436 overlapped) and the cards sat on the buttons.
 	Hud.ToastFrame = Instance.new("Frame")
 	Hud.ToastFrame.Name = "Toasts"
 	Hud.ToastFrame.Size = UDim2.new(0, 300, 0, 120)
-	Hud.ToastFrame.Position = UDim2.new(0, 256, 1, -280)
+	Hud.ToastFrame.Position = UDim2.new(0, 216, 1, -280)
 	Hud.ToastFrame.BackgroundTransparency = 1
 	Hud.ToastFrame.Parent = gui
 
-	-- Left base panel (12 slots: 8 base + up to 4 from rebirth).
+	-- Left base panel, compact and collapsible. Height is set by
+	-- RenderBaseSlots: header + filled slots + one empty slot.
 	local baseFrame = Instance.new("Frame")
 	baseFrame.Name = "BasePanel"
-	baseFrame.Size = UDim2.new(0, 230, 0, 460)
+	baseFrame.Size = UDim2.new(0, 200, 0, 66)
 	baseFrame.Position = UDim2.new(0, 16, 0, 180)
 	baseFrame.BackgroundColor3 = DARK
 	baseFrame.BorderColor3 = LIME
 	baseFrame.BorderSizePixel = 2
 	baseFrame.Parent = gui
-	makeLabel(baseFrame, "Title", UDim2.new(1, 0, 0, 30), UDim2.new(0, 0, 0, 0), "MY BASE - click a slot to sell", Color3.new(1, 1, 1), 20)
 	Hud.BasePanel = baseFrame
+	local header = Instance.new("TextButton")
+	header.Name = "Header"
+	header.Size = UDim2.new(1, 0, 0, 30)
+	header.Position = UDim2.new(0, 0, 0, 0)
+	header.BackgroundTransparency = 1
+	header.Text = "MY BASE  0/8  ▼"
+	header.TextColor3 = Color3.new(1, 1, 1)
+	header.TextScaled = true
+	header.Font = Enum.Font.GothamBold
+	header.Parent = baseFrame
+	Hud.BaseHeader = header
+	header.MouseButton1Click:Connect(function()
+		Hud.BaseCollapsed = not Hud.BaseCollapsed
+		if Hud.LastSnapshot ~= nil then
+			Hud.RenderBaseSlots(Hud.LastSnapshot)
+		end
+	end)
 
-	-- Top-5 leaderboard under the money block (right side, so it fits
-	-- on a 720p screen next to the tall 12-slot base panel).
-	local boardFrame = Instance.new("Frame")
-	boardFrame.Name = "LeaderboardPanel"
-	boardFrame.Size = UDim2.new(0, 260, 0, 190)
-	boardFrame.Position = UDim2.new(1, -280, 0, 140)
-	boardFrame.BackgroundColor3 = DARK
-	boardFrame.BorderColor3 = GOLD
-	boardFrame.BorderSizePixel = 2
-	boardFrame.Parent = gui
-	makeLabel(boardFrame, "Title", UDim2.new(1, 0, 0, 30), UDim2.new(0, 0, 0, 0), "TOP 5  $/s", GOLD, 20)
-	Hud.LeaderboardPanel = boardFrame
-
-	-- Bottom-right action buttons. The five small buttons sit in one
-	-- row ABOVE the three big ones (play-test 19 Nov: the old
-	-- 2-column cluster overlapped the conveyor cards, which covered
-	-- FUSE / INDEX / MISI and ate their clicks). The row is
-	-- vertically clear of the cards at any screen width.
+	-- Bottom-right: only three buttons. Everything else is in MENU.
+	local menuButton = makeButton(gui, "MenuButton", UDim2.new(0, 200, 0, 48), UDim2.new(1, -220, 1, -276), "MENU", LIME, 20)
 	Hud.LockButton = makeButton(gui, "LockButton", UDim2.new(0, 200, 0, 48), UDim2.new(1, -220, 1, -220), "LOCK BASE $1,500", Color3.new(0.3, 0.6, 1), 20)
-	Hud.RebirthButton = makeButton(gui, "RebirthButton", UDim2.new(0, 200, 0, 48), UDim2.new(1, -220, 1, -164), "REBIRTH", LIME, 20)
-	Hud.CollectButton = makeButton(gui, "CollectButton", UDim2.new(0, 200, 0, 48), UDim2.new(1, -220, 1, -108), "COLLECT PILE", Color3.new(0.15, 0.85, 0.25), 20)
-	local gearButton = makeButton(gui, "GearButton", UDim2.new(0, 96, 0, 48), UDim2.new(1, -532, 1, -276), "GEAR", GOLD, 20)
-	local indexButton = makeButton(gui, "IndexButton", UDim2.new(0, 96, 0, 48), UDim2.new(1, -428, 1, -276), "INDEX", Color3.new(0.68, 0.4, 0.95), 20)
-	local buffButton = makeButton(gui, "BuffButton", UDim2.new(0, 96, 0, 48), UDim2.new(1, -324, 1, -276), "BUFF", Color3.new(0.15, 0.85, 0.25), 20)
-	local missionButton = makeButton(gui, "MissionButton", UDim2.new(0, 96, 0, 48), UDim2.new(1, -220, 1, -276), "MISI", Color3.new(1, 0.55, 0.2), 20)
-	local fuseButton = makeButton(gui, "FuseButton", UDim2.new(0, 96, 0, 48), UDim2.new(1, -116, 1, -276), "FUSE", Color3.new(0.68, 0.4, 0.95), 20)
+	Hud.CollectButton = makeButton(gui, "CollectButton", UDim2.new(0, 200, 0, 48), UDim2.new(1, -220, 1, -164), "COLLECT PILE", Color3.new(0.15, 0.85, 0.25), 20)
 
+	menuButton.MouseButton1Click:Connect(function()
+		callbacks.ToggleMenu()
+	end)
 	Hud.LockButton.MouseButton1Click:Connect(function()
 		remotes.LockBase:FireServer()
 	end)
-	Hud.RebirthButton.MouseButton1Click:Connect(function()
-		callbacks.ToggleRebirth()
-	end)
 	Hud.CollectButton.MouseButton1Click:Connect(function()
 		remotes.CollectCash:FireServer()
-	end)
-	gearButton.MouseButton1Click:Connect(function()
-		callbacks.ToggleGear()
-	end)
-	indexButton.MouseButton1Click:Connect(function()
-		callbacks.ToggleIndex()
-	end)
-	buffButton.MouseButton1Click:Connect(function()
-		callbacks.ToggleBuff()
-	end)
-	missionButton.MouseButton1Click:Connect(function()
-		callbacks.ToggleMission()
-	end)
-	fuseButton.MouseButton1Click:Connect(function()
-		callbacks.ToggleFuse()
 	end)
 end
 
@@ -167,25 +147,23 @@ function Hud.Render(snapshot)
 	if Hud.MoneyLabel ~= nil then
 		Hud.MoneyLabel.Text = Format.Money(snapshot.Cash)
 		Hud.IncomeLabel.Text = Format.Rate(snapshot.Income)
-		Hud.PendingLabel.Text = "Pile: " .. Format.Money(snapshot.Pending) .. " - walk to COLLECT"
+		Hud.PendingLabel.Text = "Pile: " .. Format.Money(snapshot.Pending)
 	end
-	if Hud.PityLabel ~= nil then
-		Hud.PityLabel.Text = "Legendary in " .. Format.Seconds(snapshot.PityLegendary) .. "  |  Epic in " .. Format.Seconds(snapshot.PityEpic)
-	end
-	if Hud.BannerLabel ~= nil then
+	if Hud.TimerLabel ~= nil then
+		local eventText = "Next event in " .. Format.Seconds(snapshot.EventTimeLeft)
+		local color = LIME
 		if snapshot.Event == "RushHour" then
-			Hud.BannerLabel.Text = "RUSH HOUR! Thief on the loose - guard your base!"
-			Hud.BannerLabel.TextColor3 = Color3.new(1, 0.3, 0.3)
+			eventText = "RUSH HOUR " .. Format.Seconds(snapshot.EventTimeLeft)
+			color = Color3.new(1, 0.3, 0.3)
 		elseif snapshot.Event == "Festival" then
-			Hud.BannerLabel.Text = "FESTIVAL! 2x income for " .. Format.Seconds(snapshot.EventTimeLeft)
-			Hud.BannerLabel.TextColor3 = Color3.new(1, 0.85, 0.2)
+			eventText = "FESTIVAL 2x " .. Format.Seconds(snapshot.EventTimeLeft)
+			color = GOLD
 		elseif snapshot.Event == "GoldenHour" then
-			Hud.BannerLabel.Text = "GOLDEN HOUR! Every spawn is Golden!"
-			Hud.BannerLabel.TextColor3 = Color3.new(1, 0.85, 0.2)
-		else
-			Hud.BannerLabel.Text = "BRAINROT NIGHT MARKET - next event in " .. Format.Seconds(snapshot.EventTimeLeft)
-			Hud.BannerLabel.TextColor3 = LIME
+			eventText = "GOLDEN HOUR " .. Format.Seconds(snapshot.EventTimeLeft)
+			color = GOLD
 		end
+		Hud.TimerLabel.Text = eventText .. "  ·  Legendary in " .. Format.Seconds(snapshot.PityLegendary) .. "  ·  Epic in " .. Format.Seconds(snapshot.PityEpic)
+		Hud.TimerLabel.TextColor3 = color
 	end
 	if Hud.LockButton ~= nil then
 		if snapshot.LockLeft > 0 then
@@ -196,27 +174,25 @@ function Hud.Render(snapshot)
 			Hud.LockButton.Text = "LOCK BASE $1,500"
 		end
 	end
-	if Hud.RebirthButton ~= nil then
-		Hud.RebirthButton.Text = "REBIRTH Lv" .. tostring(snapshot.Rebirth + 1) .. " - " .. Format.Money(snapshot.RebirthCost)
-	end
 	if Hud.CollectButton ~= nil then
 		Hud.CollectButton.Text = "COLLECT " .. Format.Money(snapshot.Pending)
 	end
-	if Hud.TutorialLabel ~= nil then
+	if Hud.MissionLabel ~= nil then
 		if snapshot.TutorialStep == 0 then
-			Hud.TutorialLabel.Text = "1. Buy a brainrot on the red carpet"
+			Hud.MissionLabel.Text = "1. Buy a brainrot on the red carpet"
 		elseif snapshot.TutorialStep == 1 then
-			Hud.TutorialLabel.Text = "2. Carry it to your base and click a pad"
+			Hud.MissionLabel.Text = "2. Carry it to your base and click a pad"
 		elseif snapshot.TutorialStep == 2 then
-			Hud.TutorialLabel.Text = "3. Lock your base before you leave!"
+			Hud.MissionLabel.Text = "3. Lock your base before you leave!"
 		else
-			Hud.TutorialLabel.Text = ""
+			Hud.MissionLabel.Text = ""
 		end
 	end
 	Hud.RenderBaseSlots(snapshot)
-	Hud.RenderLeaderboard(snapshot)
 end
 
+-- Only filled slots plus the first empty one; the panel grows and
+-- shrinks with what you own instead of always showing 12 rows.
 function Hud.RenderBaseSlots(snapshot)
 	if Hud.BasePanel == nil then
 		return
@@ -227,10 +203,36 @@ function Hud.RenderBaseSlots(snapshot)
 		end
 	end
 	local placedBySlot = {}
+	local placedCount = 0
 	for _, item in ipairs(snapshot.Placed) do
 		placedBySlot[item.Slot] = item
+		placedCount = placedCount + 1
 	end
+	local visible = {}
 	for slot = 1, snapshot.Slots do
+		if placedBySlot[slot] ~= nil then
+			table.insert(visible, slot)
+		end
+	end
+	local firstEmpty = 0
+	for slot = 1, snapshot.Slots do
+		if placedBySlot[slot] == nil then
+			firstEmpty = slot
+			break
+		end
+	end
+	if firstEmpty > 0 then
+		table.insert(visible, firstEmpty)
+	end
+	if Hud.BaseHeader ~= nil then
+		Hud.BaseHeader.Text = "MY BASE  " .. tostring(placedCount) .. "/" .. tostring(snapshot.Slots) .. (Hud.BaseCollapsed and "  ▲" or "  ▼")
+	end
+	if Hud.BaseCollapsed then
+		Hud.BasePanel.Size = UDim2.new(0, 200, 0, 34)
+		return
+	end
+	Hud.BasePanel.Size = UDim2.new(0, 200, 0, 34 + #visible * 28 + 6)
+	for i, slot in ipairs(visible) do
 		local item = placedBySlot[slot]
 		local text = "Empty"
 		local color = Color3.new(0.6, 0.6, 0.6)
@@ -244,8 +246,8 @@ function Hud.RenderBaseSlots(snapshot)
 		end
 		local button = Instance.new("TextButton")
 		button.Name = "SlotButton"
-		button.Size = UDim2.new(1, -16, 0, 30)
-		button.Position = UDim2.new(0, 8, 0, 36 + (slot - 1) * 34)
+		button.Size = UDim2.new(1, -16, 0, 26)
+		button.Position = UDim2.new(0, 8, 0, 34 + (i - 1) * 28)
 		button.BackgroundColor3 = DARK
 		button.BorderColor3 = color
 		button.BorderSizePixel = 2
@@ -261,36 +263,6 @@ function Hud.RenderBaseSlots(snapshot)
 				Hud.Remotes.SellBrainrot:FireServer(slotIndex)
 			end
 		end)
-	end
-end
-
-function Hud.RenderLeaderboard(snapshot)
-	if Hud.LeaderboardPanel == nil then
-		return
-	end
-	for _, child in ipairs(Hud.LeaderboardPanel:GetChildren()) do
-		if child.Name == "BoardLine" then
-			child:Destroy()
-		end
-	end
-	local rows = snapshot.Leaderboard or {}
-	for i = 1, 5 do
-		local row = rows[i]
-		local text = tostring(i) .. ". ---"
-		if row ~= nil then
-			text = tostring(i) .. ". " .. row.Name .. "  " .. Format.Money(row.Income) .. "/s"
-		end
-		local label = Instance.new("TextLabel")
-		label.Name = "BoardLine"
-		label.Size = UDim2.new(1, -16, 0, 28)
-		label.Position = UDim2.new(0, 8, 0, 36 + (i - 1) * 30)
-		label.BackgroundTransparency = 1
-		label.Text = text
-		label.TextColor3 = Color3.new(1, 1, 1)
-		label.TextScaled = true
-		label.Font = Enum.Font.GothamBold
-		label.TextXAlignment = Enum.TextXAlignment.Left
-		label.Parent = Hud.LeaderboardPanel
 	end
 end
 

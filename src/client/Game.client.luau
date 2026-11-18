@@ -62,27 +62,11 @@ Workspace.DescendantAdded:Connect(function(descendant)
 		hookPrompt(descendant)
 	end
 end)
-local lastEvent = "None"
 local lastCarrying = false
 
 Hud.Build(remotes, {
-	ToggleGear = function()
-		Shop.ToggleGear()
-	end,
-	ToggleRebirth = function()
-		Shop.ToggleRebirth()
-	end,
-	ToggleIndex = function()
-		Shop.ToggleIndex()
-	end,
-	ToggleBuff = function()
-		Shop.ToggleBuff()
-	end,
-	ToggleMission = function()
-		Shop.ToggleMission()
-	end,
-	ToggleFuse = function()
-		Shop.ToggleFuse()
+	ToggleMenu = function()
+		Shop.ToggleMenu()
 	end,
 })
 Shop.Build(remotes)
@@ -90,16 +74,6 @@ Shop.Build(remotes)
 remotes.StateSync.OnClientEvent:Connect(function(snapshot)
 	Hud.Render(snapshot)
 	Shop.Render(snapshot)
-	if snapshot.Event ~= lastEvent then
-		if snapshot.Event == "RushHour" then
-			Effects.PlayEventBanner(Hud, "RUSH HOUR! Thief on the loose - guard your base!", Color3.new(1, 0.3, 0.3))
-		elseif snapshot.Event == "Festival" then
-			Effects.PlayEventBanner(Hud, "FESTIVAL! 2x income!", Color3.new(1, 0.85, 0.2))
-		elseif snapshot.Event == "GoldenHour" then
-			Effects.PlayEventBanner(Hud, "GOLDEN HOUR! Every spawn is Golden!", Color3.new(1, 0.85, 0.2))
-		end
-		lastEvent = snapshot.Event
-	end
 	if snapshot.Carrying ~= nil and not lastCarrying then
 		Effects.PlayPurchase(Hud)
 	end
@@ -111,11 +85,11 @@ remotes.Toast.OnClientEvent:Connect(function(text)
 end)
 
 remotes.OpenGearShop.OnClientEvent:Connect(function()
-	Shop.ToggleGear()
+	Shop.OpenMenuTab("gear")
 end)
 
 remotes.OpenFuse.OnClientEvent:Connect(function()
-	Shop.ToggleFuse()
+	Shop.OpenMenuTab("fuse")
 end)
 
 remotes.PlaySound.OnClientEvent:Connect(function(kind)

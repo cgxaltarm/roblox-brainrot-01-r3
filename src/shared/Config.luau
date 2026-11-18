@@ -67,8 +67,5 @@ Config.GearStallPosition = { 0, 0, -8 }
 -- view. Moved to the west edge of the walkway, clear of the NW base
 -- platform (x >= -10) and of the chevron path (x = 0).
 Config.FuseMachinePosition = { -4, 0, 20 }
--- Play-test 19 Nov: the board at x=30 sat in the middle of the
--- spawn view. Moved to the east edge, clear of the NE platform.
-Config.LeaderboardPosition = { 48, 0, -40 }
 
 return Config

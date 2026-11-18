@@ -157,13 +157,8 @@ function Base.UpdateCollectPad(player)
 	if state == nil or base == nil then
 		return
 	end
-	local gui = base.CollectPad:FindFirstChild("CollectLabel")
-	if gui ~= nil then
-		local label = gui:FindFirstChild("Text")
-		if label ~= nil then
-			label.Text = "COLLECT  " .. Format.Money(state.Pending)
-		end
-	end
+	-- No floating label anymore (declutter 19 Nov); the coin pile
+	-- on the green pad is the visual, the HUD money panel the number.
 	local shown = 0
 	if state.Pending > 0 then
 		shown = math.min(8, 1 + math.floor(state.Pending / 500))

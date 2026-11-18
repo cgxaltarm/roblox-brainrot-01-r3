@@ -77,19 +77,19 @@ function Effects.PlayPurchase(hud)
 end
 
 function Effects.PlayStealAlert(hud)
-	if hud.BannerLabel == nil then
+	if hud.TimerLabel == nil then
 		return
 	end
-	hud.BannerLabel.Text = "YOUR BASE IS BEING ROBBED!"
-	hud.BannerLabel.TextColor3 = Color3.new(1, 0.2, 0.2)
+	hud.TimerLabel.Text = "YOUR BASE IS BEING ROBBED!"
+	hud.TimerLabel.TextColor3 = Color3.new(1, 0.2, 0.2)
 end
 
 function Effects.PlayEventBanner(hud, text, color)
-	if hud.BannerLabel == nil then
+	if hud.TimerLabel == nil then
 		return
 	end
-	hud.BannerLabel.Text = text
-	hud.BannerLabel.TextColor3 = color
+	hud.TimerLabel.Text = text
+	hud.TimerLabel.TextColor3 = color
 end
 
 return Effects
