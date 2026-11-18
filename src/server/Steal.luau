@@ -143,7 +143,9 @@ function Steal.DropLoose(player, carried)
 	prompt.ActionText = "AMBIL"
 	prompt.ObjectText = def.Name .. " (jatuh!)"
 	prompt.HoldDuration = 0.5
-	prompt.MaxActivationDistance = 8
+	prompt.MaxActivationDistance = 10
+	prompt.RequiresLineOfSight = false
+	prompt.UIOffset = Vector2.new(0, -160)
 	prompt:SetAttribute("LooseId", id)
 	prompt.Parent = model.PrimaryPart
 	Steal.LooseItems[id] = {

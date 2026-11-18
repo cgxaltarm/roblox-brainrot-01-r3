@@ -9,8 +9,11 @@ Config.MaxSlots = 12
 Config.SellRefund = 0.5
 
 Config.ConveyorSlots = 5
-Config.ConveyorInterval = 6
-Config.ConveyorRushInterval = 3
+-- Play-test 19 Nov: a 6s set change was too fast to read or hold E
+-- on (and the 3s Rush Hour window kept killing holds mid-way).
+-- 10s calm / 6s Rush Hour gives a full hold window every time.
+Config.ConveyorInterval = 10
+Config.ConveyorRushInterval = 6
 Config.ConveyorSpacing = 10
 
 Config.LockCost = 1500
@@ -59,7 +62,13 @@ Config.BaseCenters = {
 Config.SpawnPosition = { 0, 2, 44 }
 Config.ConveyorZ = -34
 Config.GearStallPosition = { 0, 0, -8 }
-Config.FuseMachinePosition = { -6, 0, 6 }
-Config.LeaderboardPosition = { 30, 0, -40 }
+-- Play-test 19 Nov: the fuse machine sat in the middle of the plaza
+-- so its sign piled onto the neon sign + HUD banner in the spawn
+-- view. Moved to the west edge of the walkway, clear of the NW base
+-- platform (x >= -10) and of the chevron path (x = 0).
+Config.FuseMachinePosition = { -4, 0, 20 }
+-- Play-test 19 Nov: the board at x=30 sat in the middle of the
+-- spawn view. Moved to the east edge, clear of the NE platform.
+Config.LeaderboardPosition = { 48, 0, -40 }
 
 return Config

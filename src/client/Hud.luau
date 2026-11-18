@@ -87,11 +87,13 @@ function Hud.Build(remotes, callbacks)
 	Hud.TutorialLabel.BackgroundColor3 = DARK
 	Hud.TutorialLabel.BackgroundTransparency = 0.1
 
-	-- Toast feed bottom-left.
+	-- Toast feed: right of the base panel, above the conveyor cards.
+	-- Play-test 19 Nov: the old bottom-left feed sat under the cards
+	-- (x 305..436 overlapped) and the cards sat on the buttons.
 	Hud.ToastFrame = Instance.new("Frame")
 	Hud.ToastFrame.Name = "Toasts"
-	Hud.ToastFrame.Size = UDim2.new(0, 420, 0, 120)
-	Hud.ToastFrame.Position = UDim2.new(0, 16, 1, -140)
+	Hud.ToastFrame.Size = UDim2.new(0, 300, 0, 120)
+	Hud.ToastFrame.Position = UDim2.new(0, 256, 1, -280)
 	Hud.ToastFrame.BackgroundTransparency = 1
 	Hud.ToastFrame.Parent = gui
 
@@ -120,15 +122,19 @@ function Hud.Build(remotes, callbacks)
 	makeLabel(boardFrame, "Title", UDim2.new(1, 0, 0, 30), UDim2.new(0, 0, 0, 0), "TOP 5  $/s", GOLD, 20)
 	Hud.LeaderboardPanel = boardFrame
 
-	-- Bottom-right action buttons.
+	-- Bottom-right action buttons. The five small buttons sit in one
+	-- row ABOVE the three big ones (play-test 19 Nov: the old
+	-- 2-column cluster overlapped the conveyor cards, which covered
+	-- FUSE / INDEX / MISI and ate their clicks). The row is
+	-- vertically clear of the cards at any screen width.
 	Hud.LockButton = makeButton(gui, "LockButton", UDim2.new(0, 200, 0, 48), UDim2.new(1, -220, 1, -220), "LOCK BASE $1,500", Color3.new(0.3, 0.6, 1), 20)
 	Hud.RebirthButton = makeButton(gui, "RebirthButton", UDim2.new(0, 200, 0, 48), UDim2.new(1, -220, 1, -164), "REBIRTH", LIME, 20)
 	Hud.CollectButton = makeButton(gui, "CollectButton", UDim2.new(0, 200, 0, 48), UDim2.new(1, -220, 1, -108), "COLLECT PILE", Color3.new(0.15, 0.85, 0.25), 20)
-	local gearButton = makeButton(gui, "GearButton", UDim2.new(0, 96, 0, 48), UDim2.new(1, -326, 1, -108), "GEAR", GOLD, 20)
-	local indexButton = makeButton(gui, "IndexButton", UDim2.new(0, 96, 0, 48), UDim2.new(1, -326, 1, -164), "INDEX", Color3.new(0.68, 0.4, 0.95), 20)
-	local buffButton = makeButton(gui, "BuffButton", UDim2.new(0, 96, 0, 48), UDim2.new(1, -326, 1, -220), "BUFF", Color3.new(0.15, 0.85, 0.25), 20)
-	local missionButton = makeButton(gui, "MissionButton", UDim2.new(0, 96, 0, 48), UDim2.new(1, -432, 1, -108), "MISI", Color3.new(1, 0.55, 0.2), 20)
-	local fuseButton = makeButton(gui, "FuseButton", UDim2.new(0, 96, 0, 48), UDim2.new(1, -432, 1, -164), "FUSE", Color3.new(0.68, 0.4, 0.95), 20)
+	local gearButton = makeButton(gui, "GearButton", UDim2.new(0, 96, 0, 48), UDim2.new(1, -532, 1, -276), "GEAR", GOLD, 20)
+	local indexButton = makeButton(gui, "IndexButton", UDim2.new(0, 96, 0, 48), UDim2.new(1, -428, 1, -276), "INDEX", Color3.new(0.68, 0.4, 0.95), 20)
+	local buffButton = makeButton(gui, "BuffButton", UDim2.new(0, 96, 0, 48), UDim2.new(1, -324, 1, -276), "BUFF", Color3.new(0.15, 0.85, 0.25), 20)
+	local missionButton = makeButton(gui, "MissionButton", UDim2.new(0, 96, 0, 48), UDim2.new(1, -220, 1, -276), "MISI", Color3.new(1, 0.55, 0.2), 20)
+	local fuseButton = makeButton(gui, "FuseButton", UDim2.new(0, 96, 0, 48), UDim2.new(1, -116, 1, -276), "FUSE", Color3.new(0.68, 0.4, 0.95), 20)
 
 	Hud.LockButton.MouseButton1Click:Connect(function()
 		remotes.LockBase:FireServer()

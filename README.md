@@ -59,6 +59,29 @@ the label names it and shows the multiplied $/s.
 - **Slap only hits thieves:** carrying a fresh conveyor purchase home
   is safe; only stolen goods can be knocked loose.
 
+## What the first play-test fixed (19 Nov 2026, Studio Play)
+
+- **Buying has two paths now.** The hold-E prompt never fired for the
+  tester, so clicking a conveyor model buys it too (same server
+  check), the prompt bubble is lifted above the conveyor cards
+  (`UIOffset`), its range is 14 studs, and the set only rolls every
+  10 s (6 s in Rush Hour) so a hold is never cut short.
+- **Buttons no longer hide under the cards.** The five small buttons
+  (GEAR / INDEX / BUFF / MISI / FUSE) moved to one row above the big
+  buttons, vertically clear of the conveyor cards at any screen
+  width; the cards are explicitly non-interactive and only rebuild
+  when their contents change (they used to flicker every second).
+- **World labels de-cluttered.** Collect pads moved to the outer
+  corners of each base (the old inner pads sat 8 studs apart, so
+  both "COLLECT $0" labels printed as one "COLLICOLLECT $0"); owner
+  boards show the name only; the neon sign, fuse sign, gear sign and
+  leaderboard board all shrank, and the leaderboard board + Fuse
+  Machine moved off the centre of the spawn view.
+- **Wayfinding.** Neon chevrons on the ground point from spawn to the
+  conveyor, and the lamp that blocked the middle of the walkway moved
+  aside. COLLECT now toasts even when the pile is $0, so the click
+  visibly does something.
+
 ## Layout
 
 - `main.ts` (Node 22, standard library only) hands the game in: it copies `game.rbxl`, `src/`, `screenshots/` and `PLAY.json` to `/output` and writes `/output/dossier.json` with `vendor/makefun-roblox.ts`, the kit's copy, unchanged.

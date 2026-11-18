@@ -29,7 +29,11 @@ function Base.AssignBase(player)
 			if gui ~= nil then
 				local label = gui:FindFirstChild("Text")
 				if label ~= nil then
-					label.Text = player.DisplayName .. " - YOUR BASE"
+					-- Name only (play-test 19 Nov: "Name - YOUR BASE"
+					-- was wide enough to pile onto the next base's
+					-- board label). Your own board is lime, others white.
+					label.Text = player.DisplayName
+					label.TextColor3 = Color3.new(0.64, 0.90, 0.21)
 				end
 			end
 			return i
@@ -84,12 +88,16 @@ function Base.PlaceModel(player, slot)
 	-- Steal prompt: hold E on a rival's brainrot to grab it. The
 	-- server validates the lock, the cooldown and the slot, so the
 	-- prompt on your own brainrots just gets a "base kamu" toast.
+	-- UIOffset lifts the bubble above the conveyor cards, same as
+	-- the buy prompt (play-test 19 Nov).
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.Name = "StealPrompt"
 	prompt.ActionText = "CURI"
 	prompt.ObjectText = def.Name
 	prompt.HoldDuration = 0.5
-	prompt.MaxActivationDistance = 8
+	prompt.MaxActivationDistance = 10
+	prompt.RequiresLineOfSight = false
+	prompt.UIOffset = Vector2.new(0, -160)
 	prompt:SetAttribute("OwnerId", player.UserId)
 	prompt:SetAttribute("Slot", slot)
 	prompt.Parent = model.PrimaryPart
@@ -137,7 +145,7 @@ function Base.SetLaser(player, visible, secondsLeft)
 			if visible then
 				label.Text = "LOCKED  " .. Format.Seconds(secondsLeft)
 			else
-				label.Text = player.DisplayName .. " - YOUR BASE"
+				label.Text = player.DisplayName
 			end
 		end
 	end

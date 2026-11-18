@@ -59,8 +59,22 @@ function Shop.Build(remotes)
 	frame.Size = UDim2.new(0, 760, 0, 120)
 	frame.Position = UDim2.new(0.5, -380, 1, -140)
 	frame.BackgroundTransparency = 1
+	-- Display-only: never swallow clicks for buttons underneath.
+	frame.Active = false
 	frame.Parent = gui
 	Shop.ConveyorFrame = frame
+	-- How to buy, right above the cards (play-test 19 Nov: the
+	-- tester held E at the models but never saw a prompt).
+	local hint = Instance.new("TextLabel")
+	hint.Name = "BuyHint"
+	hint.Size = UDim2.new(0, 760, 0, 22)
+	hint.Position = UDim2.new(0.5, -380, 1, -166)
+	hint.BackgroundTransparency = 1
+	hint.Text = "Tahan E di dekat brainrot - atau KLIK modelnya untuk membeli"
+	hint.TextColor3 = Color3.new(1, 1, 1)
+	hint.TextScaled = true
+	hint.Font = Enum.Font.GothamBold
+	hint.Parent = gui
 	Shop.GearPanel = makePanel("GearPanel", UDim2.new(0, 420, 0, 260), UDim2.new(0.5, -210, 0.5, -130))
 	Shop.RebirthPanel = makePanel("RebirthPanel", UDim2.new(0, 460, 0, 300), UDim2.new(0.5, -230, 0.5, -150))
 	Shop.IndexPanel = makePanel("IndexPanel", UDim2.new(0, 560, 0, 460), UDim2.new(0.5, -280, 0.5, -230))
@@ -125,10 +139,28 @@ function Shop.Render(snapshot)
 	end
 end
 
+-- Cards only rebuild when the conveyor contents or the player's
+-- cash actually change (play-test 19 Nov: the old code destroyed
+-- and recreated all five cards on EVERY 1s snapshot, which read as
+-- the set "rotating" constantly and could swallow clicks mid-press).
+Shop.LastConveyorSignature = nil
+
 function Shop.RenderConveyor(snapshot)
 	if Shop.ConveyorFrame == nil then
 		return
 	end
+	local parts = {}
+	for _, slot in ipairs(snapshot.Conveyor) do
+		-- Affordability flips the card's dim state, so it is part
+		-- of the signature (a coarse cash bucket would leave a
+		-- card dimmed after the player could afford it).
+		table.insert(parts, slot.CharId .. ":" .. tostring(slot.Mutation) .. ":" .. tostring(slot.Cost) .. ":" .. tostring(snapshot.Cash < slot.Cost))
+	end
+	local signature = table.concat(parts, "|")
+	if signature == Shop.LastConveyorSignature then
+		return
+	end
+	Shop.LastConveyorSignature = signature
 	for _, child in ipairs(Shop.ConveyorFrame:GetChildren()) do
 		child:Destroy()
 	end
@@ -138,6 +170,7 @@ function Shop.RenderConveyor(snapshot)
 			local rarityColor = BrainrotData.RarityColor(def.Rarity)
 			local card = Instance.new("Frame")
 			card.Name = "Card" .. tostring(i)
+			card.Active = false
 			card.Size = UDim2.new(0, 144, 0, 112)
 			card.Position = UDim2.new(0, (i - 1) * 152, 0, 0)
 			card.BackgroundColor3 = DARK

@@ -178,6 +178,13 @@ BuyBrainrot.OnServerEvent:Connect(function(player, index)
 	doBuy(player, index)
 end)
 
+-- Clicking a conveyor model buys it through the same server check
+-- as the hold-E prompt (play-test 19 Nov: the prompt never fired
+-- for the tester, so buying now has two independent paths).
+ConveyorDisplay.OnBuyClick = function(player, index)
+	doBuy(player, index)
+end
+
 SellBrainrot.OnServerEvent:Connect(function(player, slot)
 	local ok, why = Economy.SellBrainrot(player, slot)
 	if ok then
@@ -215,6 +222,10 @@ CollectCash.OnServerEvent:Connect(function(player)
 	local amount = Economy.CollectCash(player)
 	if amount > 0 then
 		showToast(player, "Collected " .. Format.Money(amount) .. "!")
+	else
+		-- Feedback even when empty (play-test 19 Nov: the COLLECT
+		-- click looked dead because $0 produced no toast at all).
+		showToast(player, "Nothing to collect yet - your brainrots earn every second.")
 	end
 	syncPlayer(player)
 end)
@@ -371,6 +382,8 @@ for _, base in ipairs(World.Bases) do
 			local amount = Economy.CollectCash(player)
 			if amount > 0 then
 				showToast(player, "Collected " .. Format.Money(amount) .. "!")
+			else
+				showToast(player, "Nothing to collect yet - your brainrots earn every second.")
 			end
 			syncPlayer(player)
 		end)

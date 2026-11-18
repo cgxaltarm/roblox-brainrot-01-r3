@@ -69,17 +69,23 @@ function World.BuildBase(index, def)
 	part(folder, "Post4", { 1, 6, 1 }, { x + doorSide * 18, 4, z + 12 }, { 0.4, 0.3, 0.2 }, Enum.Material.Wood)
 	-- Owner board above the door.
 	local board = part(folder, "OwnerBoard", { 10, 3, 0.6 }, { x + doorSide * 19, 6.5, z }, { 0.06, 0.09, 0.16 }, Enum.Material.SmoothPlastic)
-	boardLabel(board, "OwnerLabel", "BASE " .. def.Name, { 200, 50 }, { 1, 1, 1 })
+	-- Small label, name only (play-test 19 Nov: the 200px "Name -
+	-- YOUR BASE" label piled onto the next base's board label).
+	boardLabel(board, "OwnerLabel", "BASE " .. def.Name, { 150, 36 }, { 1, 1, 1 })
 	-- Laser gate filling the WHOLE door gap (28 studs wide); hidden
 	-- until the base is locked, and solid (CanCollide) while locked so
 	-- nobody can walk into a locked base at all.
 	local laser = part(folder, "LaserGate", { 0.6, 5, 28 }, { x + doorSide * 19.5, 3.5, z }, { 1, 0.1, 0.1 }, Enum.Material.Neon)
 	laser.Transparency = 1
 	laser.CanCollide = false
-	-- Green COLLECT pad in front of the door.
-	local collect = part(folder, "CollectPad", { 10, 0.6, 8 }, { x + doorSide * 26, 1.3, z }, { 0.15, 0.85, 0.25 }, Enum.Material.Neon)
+	-- Green COLLECT pad at the OUTER corner of the platform.
+	-- Play-test 19 Nov: the old inner-corner pads (x = ±4, 8 studs
+	-- apart) made both "COLLECT $0" labels print on top of each
+	-- other as "COLLICOLLECT $0". Outer corners are 88 studs apart.
+	local padX = x - doorSide * 14
+	local collect = part(folder, "CollectPad", { 10, 0.6, 8 }, { padX, 1.3, z }, { 0.15, 0.85, 0.25 }, Enum.Material.Neon)
 	collect.Name = "CollectPad"
-	boardLabel(collect, "CollectLabel", "COLLECT  $0", { 160, 40 }, { 0.1, 1, 0.3 })
+	boardLabel(collect, "CollectLabel", "COLLECT  $0", { 130, 30 }, { 0.1, 1, 0.3 })
 	local click = Instance.new("ClickDetector")
 	click.Name = "CollectClick"
 	click.Parent = collect
@@ -102,7 +108,7 @@ function World.BuildBase(index, def)
 	-- Coin pile on the collect pad, grows with the pending pile.
 	local coins = {}
 	for i = 1, 8 do
-		local coin = part(folder, "Coin" .. tostring(i), { 1.6, 0.4, 1.6 }, { x + doorSide * 26 - 3 + (i - 1) * 0.9, 1.8, z - 2 }, { 1, 0.85, 0.2 }, Enum.Material.Metal)
+		local coin = part(folder, "Coin" .. tostring(i), { 1.6, 0.4, 1.6 }, { padX - 3 + (i - 1) * 0.9, 1.8, z - 2 }, { 1, 0.85, 0.2 }, Enum.Material.Metal)
 		coin.Shape = Enum.PartType.Cylinder
 		coin.Transparency = 1
 		coins[i] = coin
@@ -146,6 +152,31 @@ function World.BuildLamp(x, z)
 	light.Parent = bulb
 end
 
+-- Neon chevrons on the ground from spawn to the conveyor, so the
+-- player always knows which way to walk (play-test 19 Nov: the
+-- camera snags on models/walls and the player loses orientation).
+-- Each chevron is a V of two angled neon slabs pointing north (-Z).
+function World.BuildChevrons()
+	local folder = Instance.new("Folder")
+	folder.Name = "Chevrons"
+	folder.Parent = workspace
+	for _, z in ipairs({ 32, 26, 14 }) do
+		for _, side in ipairs({ -1, 1 }) do
+			-- Rotation -side*40 makes the two arms meet at the
+			-- north end, so the V points toward the conveyor (-Z).
+			local arm = Instance.new("Part")
+			arm.Name = "Chevron"
+			arm.Size = Vector3.new(3.5, 0.3, 1.2)
+			arm.CFrame = CFrame.new(side * 1, 0.15, z + 0.8) * CFrame.Angles(0, math.rad(-side * 40), 0)
+			arm.Color = Color3.new(0.64, 0.90, 0.21)
+			arm.Material = Enum.Material.Neon
+			arm.Anchored = true
+			arm.CanCollide = false
+			arm.Parent = folder
+		end
+	end
+end
+
 function World.BuildGearStall()
 	local pos = Config.GearStallPosition
 	local folder = Instance.new("Folder")
@@ -154,7 +185,7 @@ function World.BuildGearStall()
 	part(folder, "Counter", { 14, 3, 6 }, { pos[1], 1.5, pos[2] }, { 0.15, 0.15, 0.20 }, Enum.Material.SmoothPlastic)
 	part(folder, "Roof", { 16, 0.6, 8 }, { pos[1], 7, pos[2] }, { 1, 0.85, 0.2 }, Enum.Material.Fabric)
 	local sign = part(folder, "Sign", { 12, 3, 0.6 }, { pos[1], 5.5, pos[2] + 3 }, { 0.06, 0.09, 0.16 }, Enum.Material.SmoothPlastic)
-	boardLabel(sign, "GearLabel", "COINS SHOP - GEAR", { 260, 50 }, { 1, 0.85, 0.2 })
+	boardLabel(sign, "GearLabel", "COINS SHOP - GEAR", { 200, 40 }, { 1, 0.85, 0.2 })
 	local click = Instance.new("ClickDetector")
 	click.Name = "GearClick"
 	click.Parent = sign
@@ -171,8 +202,8 @@ function World.BuildFuseMachine()
 	part(folder, "Body", { 7, 6, 5 }, { pos[1], 4, pos[3] }, { 0.68, 0.40, 0.95 }, Enum.Material.SmoothPlastic)
 	part(folder, "Chute", { 3, 2, 3 }, { pos[1], 7.5, pos[3] }, { 0.06, 0.09, 0.16 }, Enum.Material.Metal)
 	part(folder, "Glow", { 7.2, 0.6, 5.2 }, { pos[1], 6.2, pos[3] }, { 1, 0.85, 0.2 }, Enum.Material.Neon)
-	local sign = part(folder, "Sign", { 10, 3, 0.6 }, { pos[1], 9.5, pos[3] }, { 0.06, 0.09, 0.16 }, Enum.Material.SmoothPlastic)
-	boardLabel(sign, "FuseLabel", "FUSE MACHINE - 3 JADI 1", { 260, 50 }, { 1, 0.85, 0.2 })
+	local sign = part(folder, "Sign", { 7, 2.2, 0.6 }, { pos[1], 9.5, pos[3] }, { 0.06, 0.09, 0.16 }, Enum.Material.SmoothPlastic)
+	boardLabel(sign, "FuseLabel", "FUSE MACHINE - 3 JADI 1", { 200, 40 }, { 1, 0.85, 0.2 })
 	local click = Instance.new("ClickDetector")
 	click.Name = "FuseClick"
 	click.Parent = sign
@@ -185,10 +216,10 @@ function World.BuildLeaderboardBoard()
 	local folder = Instance.new("Folder")
 	folder.Name = "LeaderboardBoard"
 	folder.Parent = workspace
-	local board = part(folder, "Board", { 16, 9, 1 }, { pos[1], 6, pos[3] }, { 0.06, 0.09, 0.16 }, Enum.Material.SmoothPlastic)
+	local board = part(folder, "Board", { 14, 8, 1 }, { pos[1], 6, pos[3] }, { 0.06, 0.09, 0.16 }, Enum.Material.SmoothPlastic)
 	local gui = Instance.new("BillboardGui")
 	gui.Name = "LeaderboardLabel"
-	gui.Size = UDim2.new(0, 420, 0, 240)
+	gui.Size = UDim2.new(0, 360, 0, 200)
 	gui.StudsOffset = Vector3.new(0, 0, 0)
 	gui.AlwaysOnTop = false
 	gui.Parent = board
@@ -202,7 +233,7 @@ function World.BuildLeaderboardBoard()
 	frame.Parent = gui
 	local title = Instance.new("TextLabel")
 	title.Name = "Title"
-	title.Size = UDim2.new(1, 0, 0, 36)
+	title.Size = UDim2.new(1, 0, 0, 30)
 	title.Position = UDim2.new(0, 0, 0, 0)
 	title.BackgroundTransparency = 1
 	title.Text = "TOP 5  $/s"
@@ -213,8 +244,8 @@ function World.BuildLeaderboardBoard()
 	for i = 1, 5 do
 		local line = Instance.new("TextLabel")
 		line.Name = "Line" .. tostring(i)
-		line.Size = UDim2.new(1, -8, 0, 38)
-		line.Position = UDim2.new(0, 4, 0, 36 + (i - 1) * 40)
+		line.Size = UDim2.new(1, -8, 0, 32)
+		line.Position = UDim2.new(0, 4, 0, 30 + (i - 1) * 34)
 		line.BackgroundTransparency = 1
 		line.Text = tostring(i) .. ". ---"
 		line.TextColor3 = Color3.new(1, 1, 1)
@@ -248,12 +279,12 @@ function World.BuildPityBoard()
 	folder.Parent = workspace
 	local board = part(folder, "Board", { 26, 5, 1 }, { 0, 13, -40 }, { 0.06, 0.09, 0.16 }, Enum.Material.SmoothPlastic)
 	-- Neon market sign with a dark backplate, above the conveyor.
-	-- Kept small and high so it never covers the HUD banner/pity text
-	-- when the player looks toward the conveyor from spawn.
-	local sign = part(folder, "NeonSign", { 22, 4, 1 }, { 0, 26, -42 }, { 0.06, 0.09, 0.16 }, Enum.Material.SmoothPlastic)
+	-- Smaller and higher than r3.0 (play-test 19 Nov: the 700px
+	-- sign piled onto the HUD banner + pity text in the spawn view).
+	local sign = part(folder, "NeonSign", { 16, 3, 1 }, { 0, 28, -42 }, { 0.06, 0.09, 0.16 }, Enum.Material.SmoothPlastic)
 	local signGui = Instance.new("BillboardGui")
 	signGui.Name = "NeonLabel"
-	signGui.Size = UDim2.new(0, 700, 0, 110)
+	signGui.Size = UDim2.new(0, 480, 0, 80)
 	signGui.StudsOffset = Vector3.new(0, 0, 0)
 	signGui.AlwaysOnTop = false
 	signGui.Parent = sign
@@ -291,7 +322,11 @@ function World.BuildWorld()
 	World.BuildLamp(14, -28)
 	World.BuildLamp(-14, 28)
 	World.BuildLamp(14, 28)
-	World.BuildLamp(0, 0)
+	-- Play-test 19 Nov: the lamp at (0,0) stood in the middle of the
+	-- spawn-to-conveyor walkway and blocked the path. Moved east,
+	-- clear of the NE platform (x >= 10) and the gear stall.
+	World.BuildLamp(8, 0)
+	World.BuildChevrons()
 	World.BuildGearStall()
 	World.BuildFuseMachine()
 	World.BuildLeaderboardBoard()
