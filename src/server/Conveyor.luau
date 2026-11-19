@@ -71,6 +71,7 @@ function Conveyor.SpawnNext()
 	while #Conveyor.Slots > Config.ConveyorSlots do
 		table.remove(Conveyor.Slots)
 	end
+	Conveyor.EnsureCheapSlot()
 	return slot
 end
 
@@ -80,6 +81,34 @@ function Conveyor.Fill()
 	for _ = 1, Config.ConveyorSlots do
 		table.insert(Conveyor.Slots, Conveyor.RollSlot(nil, maxLuck()))
 	end
+	Conveyor.EnsureCheapSlot()
+end
+
+-- Play-test 19 Nov: with $100 starting cash, whole sets could roll
+-- above $100 (only Tahu Gejrot $50 of the three Commons is cheap),
+-- leaving a new player unable to buy anything for a full minute.
+-- Guarantee at least one slot a fresh player can afford.
+-- It replaces the OLDEST slot (about to roll off anyway), never the
+-- newest one, so a pity Epic/Legendary spawn is never eaten.
+function Conveyor.EnsureCheapSlot()
+	for _, slot in ipairs(Conveyor.Slots) do
+		if slot.Cost <= Config.StartCash then
+			return
+		end
+	end
+	if #Conveyor.Slots == 0 then
+		return
+	end
+	for _ = 1, 10 do
+		local slot = Conveyor.RollSlot("Common", maxLuck())
+		if slot.Cost <= Config.StartCash then
+			Conveyor.Slots[#Conveyor.Slots] = slot
+			return
+		end
+	end
+	-- Fallback: plain Tahu Gejrot, no mutation, $50 flat.
+	local def = BrainrotData.FindCharacter("tahu-gejrot")
+	Conveyor.Slots[#Conveyor.Slots] = { CharId = def.Id, Mutation = "", Cost = def.Cost }
 end
 
 function Conveyor.GetSlots()

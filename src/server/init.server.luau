@@ -435,6 +435,12 @@ local function onPlayerAdded(player)
 		if state == nil then
 			return
 		end
+		-- Play-test 19 Nov: players spawned/respawned facing the
+		-- sky and walked blind into walls (the SpawnLocation's
+		-- facing alone did not fix the camera). Face every spawn
+		-- at the conveyor; the client snaps the camera the same way.
+		local spawn = Vector3.new(Config.SpawnPosition[1], Config.SpawnPosition[2], Config.SpawnPosition[3])
+		character:PivotTo(CFrame.lookAt(spawn, Vector3.new(spawn.X, spawn.Y, Config.ConveyorZ)))
 		-- Dying while carrying used to soft-lock the player (the
 		-- back model was gone but Carrying stayed set forever).
 		-- Stolen goods go home; a conveyor purchase is lost.

@@ -64,6 +64,39 @@ Workspace.DescendantAdded:Connect(function(descendant)
 end)
 local lastCarrying = false
 
+-- Play-test 19 Nov: on spawn/respawn the camera faced the sky and
+-- new players walked blind. Snap the camera behind the player,
+-- looking north at the conveyor + chevrons, for the first second;
+-- the default camera takes over after that, with the character
+-- already facing the conveyor (server PivotTo on spawn).
+local snapToken = 0
+local function snapSpawnCamera(character)
+	local root = character:WaitForChild("HumanoidRootPart", 5)
+	if root == nil then
+		return
+	end
+	local camera = Workspace.CurrentCamera
+	if camera == nil then
+		return
+	end
+	snapToken = snapToken + 1
+	local myToken = snapToken
+	local eye = root.Position + Vector3.new(0, 6, 14)
+	local target = Vector3.new(0, 3, -34)
+	camera.CameraType = Enum.CameraType.Scriptable
+	camera.CFrame = CFrame.lookAt(eye, target)
+	task.wait(1)
+	if myToken == snapToken then
+		camera.CameraType = Enum.CameraType.Custom
+	end
+end
+if player.Character ~= nil then
+	task.spawn(snapSpawnCamera, player.Character)
+end
+player.CharacterAdded:Connect(function(character)
+	task.spawn(snapSpawnCamera, character)
+end)
+
 Hud.Build(remotes, {
 	ToggleMenu = function()
 		Shop.ToggleMenu()

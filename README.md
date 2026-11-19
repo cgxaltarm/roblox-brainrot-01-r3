@@ -101,6 +101,24 @@ the label names it and shows the multiplied $/s.
 - **Smaller conveyor cards:** name + gold price, $/s in small print,
   rarity as the border colour only.
 
+## What the second play-test fixed (19 Nov 2026)
+
+- **Spawn is no longer blind.** The server faces every spawn at the
+  conveyor (`PivotTo` on `CharacterAdded`) and the client snaps the
+  camera behind the player looking north at the conveyor + chevrons
+  for the first second. A new player sees the market, not the sky.
+- **A new player can always buy something.** The conveyor now
+  guarantees at least one slot at or under the $100 starting cash
+  (`Conveyor.EnsureCheapSlot`, replacing the oldest slot so a pity
+  Epic/Legendary is never eaten). Verified by running the real
+  conveyor code under the Luau VM: 200 fills + 1.000 rolls all keep
+  the guarantee, 100 pity-Legendary rolls all survive it.
+- **Smaller world labels.** Gear sign now just "GEAR", owner boards
+  show the direction only ("NW") until claimed. Neon sign kept.
+- **Brighter night.** Lighting Brightness 1→2, ambient lifted, all
+  lamp PointLights Range 22→30 / Brightness 2→3, plus four new path
+  lamps flanking the spawn-to-conveyor walkway.
+
 ## Layout
 
 - `main.ts` (Node 22, standard library only) hands the game in: it copies `game.rbxl`, `src/`, `screenshots/` and `PLAY.json` to `/output` and writes `/output/dossier.json` with `vendor/makefun-roblox.ts`, the kit's copy, unchanged.

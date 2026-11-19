@@ -68,9 +68,10 @@ function World.BuildBase(index, def)
 	part(folder, "Post4", { 1, 6, 1 }, { x + doorSide * 18, 4, z + 12 }, { 0.4, 0.3, 0.2 }, Enum.Material.Wood)
 	-- Owner board above the door.
 	local board = part(folder, "OwnerBoard", { 10, 3, 0.6 }, { x + doorSide * 19, 6.5, z }, { 0.06, 0.09, 0.16 }, Enum.Material.SmoothPlastic)
-	-- Small label, name only (play-test 19 Nov: the 200px "Name -
-	-- YOUR BASE" label piled onto the next base's board label).
-	boardLabel(board, "OwnerLabel", "BASE " .. def.Name, { 150, 36 }, { 1, 1, 1 })
+	-- Name only when claimed, direction only when empty (play-test
+	-- 19 Nov: "BASE NE" piled onto the HUD at some camera angles;
+	-- the shorter label stays clear).
+	boardLabel(board, "OwnerLabel", def.Name, { 120, 28 }, { 1, 1, 1 })
 	-- Laser gate filling the WHOLE door gap (28 studs wide); hidden
 	-- until the base is locked, and solid (CanCollide) while locked so
 	-- nobody can walk into a locked base at all.
@@ -149,8 +150,8 @@ function World.BuildLamp(x, z)
 	bulb.Shape = Enum.PartType.Ball
 	local light = Instance.new("PointLight")
 	light.Color = Color3.new(1, 0.8, 0.45)
-	light.Range = 22
-	light.Brightness = 2
+	light.Range = 30
+	light.Brightness = 3
 	light.Parent = bulb
 end
 
@@ -187,7 +188,9 @@ function World.BuildGearStall()
 	part(folder, "Counter", { 14, 3, 6 }, { pos[1], 1.5, pos[2] }, { 0.15, 0.15, 0.20 }, Enum.Material.SmoothPlastic)
 	part(folder, "Roof", { 16, 0.6, 8 }, { pos[1], 7, pos[2] }, { 1, 0.85, 0.2 }, Enum.Material.Fabric)
 	local sign = part(folder, "Sign", { 12, 3, 0.6 }, { pos[1], 5.5, pos[2] + 3 }, { 0.06, 0.09, 0.16 }, Enum.Material.SmoothPlastic)
-	boardLabel(sign, "GearLabel", "COINS SHOP - GEAR", { 200, 40 }, { 1, 0.85, 0.2 })
+	-- Short label only (play-test 19 Nov: "COINS SHOP - GEAR"
+	-- piled onto the HUD at some camera angles).
+	boardLabel(sign, "GearLabel", "GEAR", { 140, 28 }, { 1, 0.85, 0.2 })
 	local click = Instance.new("ClickDetector")
 	click.Name = "GearClick"
 	click.Parent = sign
@@ -266,6 +269,14 @@ function World.BuildWorld()
 	-- spawn-to-conveyor walkway and blocked the path. Moved east,
 	-- clear of the NE platform (x >= 10) and the gear stall.
 	World.BuildLamp(8, 0)
+	-- Play-test round 2: the spawn-to-conveyor path and the areas
+	-- around the bases were too dark. Four path lamps flank the
+	-- chevron walkway (clear of the fuse machine, gear stall and
+	-- base platforms).
+	World.BuildLamp(-7, 26)
+	World.BuildLamp(7, 26)
+	World.BuildLamp(-9, -16)
+	World.BuildLamp(9, -16)
 	World.BuildChevrons()
 	World.BuildGearStall()
 	World.BuildFuseMachine()
