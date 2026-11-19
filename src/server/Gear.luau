@@ -1,3 +1,4 @@
+-- round 4
 -- Gear: the Coins Shop tools. Cash buys a Slap tool, a Speed Coil
 -- boost, or a Trap that freezes a thief who steps on it. Gear gives
 -- money a second purpose and stealing a real counterplay.

@@ -1,3 +1,4 @@
+-- round 4
 -- Steal: one player grabs a brainrot from another player's unlocked
 -- base, carries it home slowly, and drops it when anyone tags them or
 -- slaps them. A dropped brainrot FALLS TO THE GROUND as a loose item
@@ -138,16 +139,19 @@ function Steal.DropLoose(player, carried)
 	model.Parent = workspace
 	local id = Steal.NextLooseId
 	Steal.NextLooseId = Steal.NextLooseId + 1
+	local promptAnchor = Instance.new("Attachment")
+	promptAnchor.Name = "LoosePromptAnchor"
+	promptAnchor.Position = Vector3.new(0, 3, 0)
+	promptAnchor.Parent = model.PrimaryPart
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.Name = "LoosePrompt"
 	prompt.ActionText = "AMBIL"
 	prompt.ObjectText = def.Name .. " (jatuh!)"
 	prompt.HoldDuration = 0.5
-	prompt.MaxActivationDistance = 10
+	prompt.MaxActivationDistance = 14
 	prompt.RequiresLineOfSight = false
-	prompt.UIOffset = Vector2.new(0, -160)
 	prompt:SetAttribute("LooseId", id)
-	prompt.Parent = model.PrimaryPart
+	prompt.Parent = promptAnchor
 	Steal.LooseItems[id] = {
 		Id = id,
 		CharId = carried.CharId,

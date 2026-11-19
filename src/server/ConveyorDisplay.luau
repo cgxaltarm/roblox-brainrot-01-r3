@@ -1,3 +1,4 @@
+-- round 4
 -- ConveyorDisplay: the five brainrot models standing on the red
 -- carpet, spaced wide apart so their three-line labels never overlap.
 -- Hold E on a model to buy it (ProximityPrompt); the display rebuilds
@@ -44,16 +45,19 @@ function ConveyorDisplay.Refresh()
 			-- conveyor cards at the bottom of the screen (play-test
 			-- 19 Nov: the bubble sat exactly behind them), and the
 			-- wider range survives the 10s set rotation.
+			local promptAnchor = Instance.new("Attachment")
+			promptAnchor.Name = "BuyPromptAnchor"
+			promptAnchor.Position = Vector3.new(0, 3, 0)
+			promptAnchor.Parent = model.PrimaryPart
 			local prompt = Instance.new("ProximityPrompt")
 			prompt.Name = "BuyPrompt"
 			prompt.ActionText = "BELI"
 			prompt.ObjectText = def.Name .. " - " .. Format.Money(slot.Cost)
 			prompt.HoldDuration = 1
-			prompt.MaxActivationDistance = 14
+			prompt.MaxActivationDistance = 18
 			prompt.RequiresLineOfSight = false
-			prompt.UIOffset = Vector2.new(0, -160)
 			prompt:SetAttribute("SlotIndex", i)
-			prompt.Parent = model.PrimaryPart
+			prompt.Parent = promptAnchor
 			-- Click fallback: clicking the model buys it through the
 			-- same server check as the prompt. The detector dies with
 			-- the model on the next refresh, so no stale handlers.

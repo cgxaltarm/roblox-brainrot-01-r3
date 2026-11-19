@@ -1,3 +1,4 @@
+-- round 4
 -- World: build the night-market plaza at runtime. Bases are kiosks with
 -- low walls on three sides, an awning roof, an owner board, a visible
 -- laser gate and a green COLLECT pad out front. Stalls, string lights,
@@ -99,8 +100,25 @@ function World.BuildBase(index, def)
 		for col = 1, 4 do
 			local px = x + (col - 2.5) * 8
 			local pz = z + (row - 2) * 8
-			local pad = part(folder, "Pad" .. tostring(slot), { 6, 0.5, 6 }, { px, 1.25, pz }, { 0.35, 0.35, 0.45 }, Enum.Material.SmoothPlastic)
+			local pad = part(folder, "Pad" .. tostring(slot), { 6, 0.5, 6 }, { px, 1.25, pz }, { 0.15, 0.75, 1.0 }, Enum.Material.Neon)
 			pad.Name = "Pad" .. tostring(slot)
+			local hint = Instance.new("BillboardGui")
+			hint.Name = "PadHint"
+			hint.Size = UDim2.new(0, 110, 0, 34)
+			hint.StudsOffset = Vector3.new(0, 1.2, 0)
+			hint.AlwaysOnTop = true
+			hint.Enabled = false
+			hint.Parent = pad
+			local hintText = Instance.new("TextLabel")
+			hintText.Name = "Text"
+			hintText.Size = UDim2.new(1, 0, 1, 0)
+			hintText.BackgroundColor3 = Color3.new(0.64, 0.9, 0.21)
+			hintText.BackgroundTransparency = 0.05
+			hintText.Text = "KLIK"
+			hintText.TextColor3 = Color3.new(0.06, 0.09, 0.16)
+			hintText.TextScaled = true
+			hintText.Font = Enum.Font.GothamBold
+			hintText.Parent = hint
 			local padClick = Instance.new("ClickDetector")
 			padClick.Name = "PadClick"
 			padClick.Parent = pad
@@ -224,10 +242,10 @@ function World.BuildPityBoard()
 	-- Neon market sign with a dark backplate, above the conveyor.
 	-- Smaller and higher than r3.0 (play-test 19 Nov: the 700px
 	-- sign piled onto the HUD banner + pity text in the spawn view).
-	local sign = part(folder, "NeonSign", { 16, 3, 1 }, { 0, 28, -42 }, { 0.06, 0.09, 0.16 }, Enum.Material.SmoothPlastic)
+	local sign = part(folder, "NeonSign", { 12, 2.5, 1 }, { 0, 32, -42 }, { 0.06, 0.09, 0.16 }, Enum.Material.SmoothPlastic)
 	local signGui = Instance.new("BillboardGui")
 	signGui.Name = "NeonLabel"
-	signGui.Size = UDim2.new(0, 480, 0, 80)
+	signGui.Size = UDim2.new(0, 360, 0, 60)
 	signGui.StudsOffset = Vector3.new(0, 0, 0)
 	signGui.AlwaysOnTop = false
 	signGui.Parent = sign

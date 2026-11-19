@@ -1,3 +1,4 @@
+-- round 4
 -- init.server: entrypoint. Validates the catalogue, builds the world,
 -- creates the remotes, wires every click and remote, and runs the
 -- one-second game loop: income piles up, events tick, the pity clock
@@ -356,6 +357,10 @@ for _, base in ipairs(World.Bases) do
 				if state.Carrying == nil then
 					return
 				end
+				if slot > Economy.SlotCount(player) then
+					showToast(player, "Slot " .. tostring(slot) .. " terkunci - buka lewat rebirth.")
+					return
+				end
 				local ok, why = Economy.PlaceCarried(player, slot)
 				if ok then
 					Base.PlaceModel(player, slot)
@@ -441,20 +446,29 @@ local function onPlayerAdded(player)
 		-- at the conveyor; the client snaps the camera the same way.
 		local spawn = Vector3.new(Config.SpawnPosition[1], Config.SpawnPosition[2], Config.SpawnPosition[3])
 		character:PivotTo(CFrame.lookAt(spawn, Vector3.new(spawn.X, spawn.Y, Config.ConveyorZ)))
-		-- Dying while carrying used to soft-lock the player (the
-		-- back model was gone but Carrying stayed set forever).
-		-- Stolen goods go home; a conveyor purchase is lost.
-		if state.Carrying ~= nil then
-			Steal.DropCarried(player, true)
-		end
+		local carried = state.Carrying
 		local humanoid = character:FindFirstChildOfClass("Humanoid")
-		if humanoid == nil then
-			return
+		if humanoid ~= nil then
+			if state.Gear.CoilUntil > os.time() then
+				humanoid.WalkSpeed = Economy.BaseWalkSpeed(player) * Config.CoilSpeedMult
+			else
+				humanoid.WalkSpeed = Economy.BaseWalkSpeed(player)
+			end
 		end
-		if state.Gear.CoilUntil > os.time() then
-			humanoid.WalkSpeed = Economy.BaseWalkSpeed(player) * Config.CoilSpeedMult
-		else
-			humanoid.WalkSpeed = Economy.BaseWalkSpeed(player)
+		-- Respawn keeps the brainrot in hand: the state record stays put
+		-- and only the visual is rebuilt on the new character. Slap and
+		-- tag drops still go through Steal.DropCarried as before.
+		if carried ~= nil then
+			Steal.AttachCarried(player, carried.CharId, carried.Mutation)
+			if humanoid ~= nil then
+				local speed = Economy.BaseWalkSpeed(player)
+				if state.Gear.CoilUntil > os.time() then
+					speed = speed * Config.CoilSpeedMult
+				else
+					speed = speed * Config.CarrySpeedMult
+				end
+				humanoid.WalkSpeed = speed
+			end
 		end
 	end)
 	syncPlayer(player)

@@ -1,3 +1,4 @@
+-- round 4
 -- Conveyor: the five-slot belt that rolls new brainrots into the market.
 -- A pity timer guarantees an Epic every few minutes and a Legendary
 -- after a longer wait, so there is always a reason to stay and watch.

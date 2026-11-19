@@ -1,3 +1,4 @@
+-- round 4
 -- Events: the market clock. Every few minutes the market flips to
 -- Rush Hour (fast conveyor plus a roaming thief) or Festival (double
 -- income), with a Golden Hour bonus round in between. The HUD and the

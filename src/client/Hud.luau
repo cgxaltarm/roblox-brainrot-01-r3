@@ -1,3 +1,4 @@
+-- round 4
 -- Hud: the screen interface, decluttered (Wira 19 Nov: "sangat padat
 -- dan berantakan"). Only the essentials stay on the main screen:
 -- money top-right, ONE timer line top-centre, ONE mission line under
@@ -82,10 +83,10 @@ function Hud.Build(remotes, callbacks)
 	Hud.PendingLabel = makeLabel(moneyFrame, "Pending", UDim2.new(1, -16, 0, 22), UDim2.new(0, 8, 0, 68), "Pile: $0", Color3.new(1, 1, 1), 20)
 
 	-- ONE timer line top-centre: next event + both pity clocks.
-	Hud.TimerLabel = makeLabel(gui, "Timer", UDim2.new(0, 560, 0, 26), UDim2.new(0.5, -280, 0, 10), "", LIME, 20)
+	Hud.TimerLabel = makeLabel(gui, "Timer", UDim2.new(0, 560, 0, 26), UDim2.new(0.5, -280, 0, 0), "", LIME, 20)
 
 	-- ONE mission line under it, small, never blocking the centre.
-	Hud.MissionLabel = makeLabel(gui, "Mission", UDim2.new(0, 480, 0, 22), UDim2.new(0.5, -240, 0, 40), "1. Buy a brainrot on the red carpet", Color3.new(1, 1, 1), 20)
+	Hud.MissionLabel = makeLabel(gui, "Mission", UDim2.new(0, 480, 0, 22), UDim2.new(0.5, -240, 0, 30), "1. Buy a brainrot on the red carpet", Color3.new(1, 1, 1), 20)
 	Hud.MissionLabel.BackgroundColor3 = DARK
 	Hud.MissionLabel.BackgroundTransparency = 0.1
 

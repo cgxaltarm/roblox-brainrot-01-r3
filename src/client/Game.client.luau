@@ -1,3 +1,4 @@
+-- round 4
 -- Game.client: entrypoint. Builds the HUD and the shop, listens for
 -- state snapshots from the server, and wires the Slap key. The client
 -- only renders: all money, ownership and steal outcomes live on the

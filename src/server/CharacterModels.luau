@@ -1,3 +1,4 @@
+-- round 4
 -- CharacterModels: build a distinct 3D model for a brainrot from its
 -- BrainrotData definition. Every character shares a ball body, head and
 -- eyes, but its signature prop parts give it a silhouette no other
@@ -107,8 +108,8 @@ function CharacterModels.AttachLabel(model, def, mutation, bodySize)
 	end
 	local gui = Instance.new("BillboardGui")
 	gui.Name = "BrainrotLabel"
-	gui.Size = UDim2.new(0, 220, 0, 96)
-	gui.StudsOffset = Vector3.new(0, bodySize + 2.6, 0)
+	gui.Size = UDim2.new(0, 170, 0, 84)
+	gui.StudsOffset = Vector3.new(0, bodySize + 2.2, 0)
 	gui.AlwaysOnTop = false
 	gui.Parent = primary
 	local back = Instance.new("Frame")
@@ -127,7 +128,7 @@ function CharacterModels.AttachLabel(model, def, mutation, bodySize)
 	end
 	local nameLabel = Instance.new("TextLabel")
 	nameLabel.Name = "NameLine"
-	nameLabel.Size = UDim2.new(1, 0, 0, 32)
+	nameLabel.Size = UDim2.new(1, 0, 0, 28)
 	nameLabel.Position = UDim2.new(0, 0, 0, 0)
 	nameLabel.BackgroundTransparency = 1
 	nameLabel.Text = nameText

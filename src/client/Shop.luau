@@ -1,3 +1,4 @@
+-- round 4
 -- Shop: the conveyor cards and the single MENU panel. The main
 -- screen stays bare (Wira 19 Nov: "sangat padat dan berantakan"), so
 -- gear, buff, index, missions, fuse, rebirth and the Top-5 all live

@@ -1,3 +1,4 @@
+-- round 4
 -- Base: assign a kiosk to each player, place and remove brainrots on
 -- its pads, show the lock laser and timer, and keep the collect pad
 -- and its coin pile in step with the pending pile.
@@ -78,6 +79,11 @@ function Base.PlaceModel(player, slot)
 	end
 	Base.RemoveModel(player, slot)
 	local pos = Base.PadPosition(player, slot)
+	local base = Base.GetBase(player)
+	if base ~= nil and base.Pads[slot] ~= nil then
+		base.Pads[slot].Color = Color3.new(0.35, 0.38, 0.42)
+		base.Pads[slot].Material = Enum.Material.SmoothPlastic
+	end
 	local model = CharacterModels.BuildModel(def, placed.Mutation, pos)
 	for _, part in ipairs(model:GetDescendants()) do
 		if part:IsA("BasePart") then
@@ -90,17 +96,20 @@ function Base.PlaceModel(player, slot)
 	-- prompt on your own brainrots just gets a "base kamu" toast.
 	-- UIOffset lifts the bubble above the conveyor cards, same as
 	-- the buy prompt (play-test 19 Nov).
+	local promptAnchor = Instance.new("Attachment")
+	promptAnchor.Name = "StealPromptAnchor"
+	promptAnchor.Position = Vector3.new(0, 3, 0)
+	promptAnchor.Parent = model.PrimaryPart
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.Name = "StealPrompt"
 	prompt.ActionText = "CURI"
 	prompt.ObjectText = def.Name
 	prompt.HoldDuration = 0.5
-	prompt.MaxActivationDistance = 10
+	prompt.MaxActivationDistance = 14
 	prompt.RequiresLineOfSight = false
-	prompt.UIOffset = Vector2.new(0, -160)
 	prompt:SetAttribute("OwnerId", player.UserId)
 	prompt:SetAttribute("Slot", slot)
-	prompt.Parent = model.PrimaryPart
+	prompt.Parent = promptAnchor
 	Base.Models[player.UserId .. "_" .. tostring(slot)] = model
 end
 
@@ -157,8 +166,28 @@ function Base.UpdateCollectPad(player)
 	if state == nil or base == nil then
 		return
 	end
-	-- No floating label anymore (declutter 19 Nov); the coin pile
-	-- on the green pad is the visual, the HUD money panel the number.
+	-- Keep empty pads bright, occupied pads subdued, and only show
+	-- the click hint on this player's empty unlocked slots while carrying.
+	local slots = Economy.SlotCount(player)
+	for slot, pad in ipairs(base.Pads) do
+		local occupied = state.Placed[slot] ~= nil
+		local unlocked = slot <= slots
+		if occupied then
+			pad.Color = Color3.new(0.35, 0.38, 0.42)
+			pad.Material = Enum.Material.SmoothPlastic
+		elseif unlocked then
+			pad.Color = Color3.new(0.15, 0.75, 1.0)
+			pad.Material = Enum.Material.Neon
+		else
+			pad.Color = Color3.new(0.25, 0.25, 0.3)
+			pad.Material = Enum.Material.SmoothPlastic
+		end
+		local hint = pad:FindFirstChild("PadHint")
+		if hint ~= nil then
+			hint.Enabled = state.Carrying ~= nil and unlocked and not occupied
+		end
+	end
+	-- The green collect pad and coin pile show pending income.
 	local shown = 0
 	if state.Pending > 0 then
 		shown = math.min(8, 1 + math.floor(state.Pending / 500))
